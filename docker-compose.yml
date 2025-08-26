@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: student-management-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres123@postgres:5432/student_management
+      REDIS_URL: redis://:redis123@redis:6379
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - student-management
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: student-management-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: student_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - student-management
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d student_management"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: student-management-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    networks:
+      - student-management
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: student-management-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - student-management
+    profiles:
+      - proxy # Only start with --profile proxy
+
+  # Monitoring with Prometheus (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: student-management-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - student-management
+    profiles:
+      - monitoring # Only start with --profile monitoring
+
+  # Grafana Dashboard (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: student-management-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: false
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - student-management
+    profiles:
+      - monitoring # Only start with --profile monitoring
+
+volumes:
+  postgres_data:
+    name: student-management-postgres-data
+  redis_data:
+    name: student-management-redis-data
+  prometheus_data:
+    name: student-management-prometheus-data
+  grafana_data:
+    name: student-management-grafana-data
+
+networks:
+  student-management:
+    name: student-management-network
+    driver: bridge
+
+
+

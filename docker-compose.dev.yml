@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Development
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: student-management-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: student_management_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - student-management-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d student_management_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Development
+  redis-dev:
+    image: redis:7-alpine
+    container_name: student-management-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - student-management-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin for Database Management (Optional)
+  pgadmin-dev:
+    image: dpage/pgadmin4:latest
+    container_name: student-management-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@student-management.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+    networks:
+      - student-management-dev
+    depends_on:
+      - postgres-dev
+    profiles:
+      - tools # Only start with --profile tools
+
+  # Redis Commander for Redis Management (Optional)
+  redis-commander-dev:
+    image: rediscommander/redis-commander:latest
+    container_name: student-management-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis-dev:6379
+      REDIS_PASSWORD: redis123
+    ports:
+      - "8081:8081"
+    networks:
+      - student-management-dev
+    depends_on:
+      - redis-dev
+    profiles:
+      - tools # Only start with --profile tools
+
+volumes:
+  postgres_dev_data:
+    name: student-management-postgres-dev-data
+  redis_dev_data:
+    name: student-management-redis-dev-data
+  pgadmin_dev_data:
+    name: student-management-pgadmin-dev-data
+
+networks:
+  student-management-dev:
+    name: student-management-dev-network
+    driver: bridge
+
+
+
+

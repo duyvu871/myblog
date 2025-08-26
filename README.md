@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Student Management System – Tutoring Center
 
-## Getting Started
+## Introduction
 
-First, run the development server:
+This project is a student management system designed for small tutoring centers or individual businesses. It is built with **Next.js 15 + React 19**, integrated with **Auth.js**, **Prisma + Postgres (Supabase)**, **Upstash Redis**, **Zod**, **Jotai**, and **Mantine**.
+
+Main objectives:
+
+* Manage students, classes, and teachers
+* Track attendance and academic performance
+* Manage tuition fees and payments
+* Provide reporting, statistics, and role-based access control
+
+---
+
+## Technology Stack
+
+* **Next.js 15** (App Router, React Server Components)
+* **React 19** (Server Actions, new hooks)
+* **Auth.js** – authentication & authorization
+* **Prisma ORM + Supabase/Postgres** – database
+* **Upstash Redis** – caching and rate limiting
+* **Zod** – data validation
+* **Jotai** – client state management
+* **Mantine** – UI library
+
+---
+
+## Project Structure
+
+```
+app/        # Routing and pages
+features/   # Business modules (students, classes, billing…)
+components/ # Reusable UI components
+lib/        # Shared utilities (auth, db, redis…)
+store/      # Jotai state atoms
+prisma/     # Schema & migrations
+scripts/    # Seed and development tools
+styles/     # Global styles
+```
+
+---
+
+## Installation & Setup
+
+### 1. Clone repository
+
+```bash
+git clone <repo-url>
+cd <project-folder>
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create `.env.local` file:
+
+```env
+DATABASE_URL=postgresql://...
+NEXTAUTH_SECRET=...
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+### 4. Database migration & seeding
+
+```bash
+npx prisma migrate dev
+npm run seed
+```
+
+### 5. Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Application will be available at [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## NPM Scripts
 
-## Learn More
+```json
+{
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "migrate:dev": "prisma migrate dev",
+  "migrate:deploy": "prisma migrate deploy",
+  "seed": "tsx scripts/seed.ts"
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Prettier Configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`.prettierrc.yml`:
 
-## Deploy on Vercel
+```yml
+printWidth: 100
+semi: false
+singleQuote: true
+trailingComma: es5
+bracketSpacing: true
+arrowParens: always
+endOfLine: lf
+useTabs: false
+tabWidth: 2
+plugins:
+  - prettier-plugin-tailwindcss
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Feature Checklist
+
+* [x] Authentication & Authorization
+* [x] Student management (CRUD)
+* [ ] Class & teacher management
+* [ ] Enrollment and attendance
+* [ ] Tuition, payments, invoices
+* [ ] Reports and statistics
+
+---
+
+## Deployment
+
+* **Vercel** for hosting
+* **Supabase (Postgres)** for database
+* **Upstash Redis** for caching
+
+---
+
+## License
+
+This project is intended for educational and internal use. It may be extended into a production-ready solution in the future.

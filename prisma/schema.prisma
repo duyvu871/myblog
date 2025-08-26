@@ -1,0 +1,130 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================================================
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum AccountProvider {
+  CREDENTIALS
+  GOOGLE
+  GITHUB
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+// Main user model
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String?   // Nullable for OAuth users
+  phone         String?
+  bio           String?   @db.Text
+  avatar        String?
+  role          Role      @default(STUDENT)
+  status        UserStatus @default(PENDING_VERIFICATION)
+  emailVerified DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Authentication relations
+  accounts         Account[]
+  sessions         Session[]
+  passwordResets   PasswordReset[]
+  emailVerifications EmailVerification[]
+
+  // Application-specific relations (for future features)
+  // studentProfile   StudentProfile?
+  // teacherProfile   TeacherProfile?
+  // courses          Course[]
+  // enrollments      Enrollment[]
+
+  @@map("users")
+}
+
+// OAuth accounts (Google, GitHub, etc.)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          AccountProvider
+  providerAccountId String
+  refreshToken      String? @db.Text
+  accessToken       String? @db.Text
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  idToken           String? @db.Text
+  sessionState      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// User sessions for authentication
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// Password reset tokens
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+// Email verification tokens
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@map("email_verifications")
+}

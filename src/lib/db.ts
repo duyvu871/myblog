@@ -1,0 +1,40 @@
+import { Prisma, PrismaClient } from '@prisma/client';
+
+const prismaClientSingleton = (): PrismaClient => {
+	return new PrismaClient({
+		...(process.env.NODE_ENV === "development" && {
+			log: ['query', 'info', 'warn', 'error'],
+		})
+	});
+};
+
+declare global {
+	var prisma: undefined | PrismaClient;
+	interface BigInt {
+		toJSON(): string;
+	}
+}
+
+BigInt.prototype.toJSON = function (): string {
+	return this.toString();
+};
+
+const prisma: PrismaClient = globalThis.prisma ?? prismaClientSingleton();
+
+
+// log query time for prisma
+prisma.$use(async (params, next) => {
+	const before = Date.now();
+
+	const result = await next(params);
+
+	const after = Date.now();
+
+	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
+
+	return result;
+});
+
+export default prisma;
+
+if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
