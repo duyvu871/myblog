@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Student Management',
-    default: 'Authentication | Student Management',
+    template: '%s | Nextjs 15 template',
+    default: 'Authentication | Nextjs 15 template',
   },
-  description: 'Đăng nhập hoặc đăng ký tài khoản Student Management System',
+  description: 'Login or register to Nextjs 15 template',
 };
 
 export default function AuthLayout({

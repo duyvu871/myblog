@@ -19,7 +19,7 @@ export function SessionProvider({ children, session }: SessionProviderProps) {
       refetchInterval={5 * 60}
       refetchOnWindowFocus={false}
       basePath="/api/auth"
-      baseUrl={env.NEXTAUTH_URL}
+      baseUrl={process.env.NEXT_PUBLIC_BASE_URL}
     >
       {children}
     </NextAuthSessionProvider>

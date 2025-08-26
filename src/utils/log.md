@@ -1,26 +1,26 @@
 # Logging System - Winston Implementation
 
-Hệ thống logging toàn diện sử dụng Winston cho Student Management System, hỗ trợ multiple transports, log levels, và structured logging.
+Comprehensive logging system using Winston for Next.js 15 template, supporting multiple transports, log levels, and structured logging.
 
 ## 🚀 Features
 
 - ✅ **Multiple Log Levels** - Error, Warn, Info, HTTP, Debug, Verbose, Silly
-- ✅ **Environment-based Configuration** - Khác nhau giữa development và production
-- ✅ **File Rotation** - Automatic log file rotation với size limits
-- ✅ **Structured Logging** - JSON format cho production, pretty format cho development
-- ✅ **Colored Output** - Color-coded logs cho development
+- ✅ **Environment-based Configuration** - Different settings for development and production
+- ✅ **File Rotation** - Automatic log file rotation with size limits
+- ✅ **Structured Logging** - JSON format for production, pretty format for development
+- ✅ **Colored Output** - Color-coded logs for development
 - ✅ **Performance Logging** - Function execution timing
-- ✅ **Security Logging** - Security events và threats
+- ✅ **Security Logging** - Security events and threats
 - ✅ **HTTP Request Logging** - API request/response logging
-- ✅ **Error Handling** - Uncaught exceptions và unhandled rejections
-- ✅ **Context-aware** - Rich metadata với mỗi log entry
+- ✅ **Error Handling** - Uncaught exceptions and unhandled rejections
+- ✅ **Context-aware** - Rich metadata with each log entry
 
 ## 📁 File Structure
 
 ```
 src/utils/
 ├── log.ts              # Main logging utility
-└── log.md              # Documentation này
+└── log.md              # This documentation
 
 logs/                   # Log files (production only)
 ├── error.log           # Error logs only
@@ -357,13 +357,13 @@ const customLogger = winston.createLogger({
 ## 📁 Log Files (Production)
 
 ### error.log
-- Chỉ error-level logs
+- Only error-level logs
 - Max size: 10MB
 - Max files: 5
 - Auto rotation
 
 ### combined.log
-- Tất cả logs từ info trở lên
+- All logs from info level and above
 - Max size: 10MB
 - Max files: 5
 - Auto rotation
@@ -404,7 +404,7 @@ grep "PERFORMANCE" logs/combined.log | grep -E "(duration.*[5-9][0-9]{3}|duratio
 
 ### Log Monitoring Tools
 
-Recommended tools để monitor logs:
+Recommended tools for monitoring logs:
 - **ELK Stack** (Elasticsearch, Logstash, Kibana)
 - **Fluentd** for log forwarding
 - **Grafana** for visualization
@@ -534,16 +534,16 @@ test('should log user creation', async () => {
 
 ## 📝 Best Practices
 
-1. **Use appropriate log levels** - Debug cho development, Info+ cho production
+1. **Use appropriate log levels** - Debug for development, Info+ for production
 2. **Include context** - Always provide relevant metadata
 3. **Don't log sensitive data** - Passwords, tokens, personal information
-4. **Use structured logging** - JSON format cho production
-5. **Monitor log file sizes** - Set up rotation và cleanup
+4. **Use structured logging** - JSON format for production
+5. **Monitor log file sizes** - Set up rotation and cleanup
 6. **Centralize logging** - Use consistent logging throughout application
-7. **Log business events** - Important user actions và system events
+7. **Log business events** - Important user actions and system events
 8. **Performance logging** - Track slow operations
 9. **Security logging** - Monitor security-related events
-10. **Error correlation** - Include request IDs để trace errors
+10. **Error correlation** - Include request IDs to trace errors
 
 ## 🔗 Integration Examples
 
@@ -586,4 +586,4 @@ export async function GET(request: Request) {
 }
 ```
 
-Hệ thống logging này cung cấp foundation mạnh mẽ để monitor, debug, và maintain Student Management System một cách hiệu quả!
+This logging system provides a powerful foundation for effective monitoring, debugging, and maintenance!

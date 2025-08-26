@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Đăng ký',
-  description: 'Tạo tài khoản mới cho hệ thống quản lý học sinh',
+  title: 'Register Page',
+  description: 'Register Page Description',
 };
 
 export default function RegisterLayout({

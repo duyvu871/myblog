@@ -43,7 +43,7 @@ const LogoIcon = () => (
 const BrandingSection = ({ 
   title = "Sign Up | Log in", 
   subtitle = "Form", 
-  companyName = "Student Management" 
+  companyName = "Bui An Du" 
 }: BrandingSectionProps) => (
   <Box
     flex={1}

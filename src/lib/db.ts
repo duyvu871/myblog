@@ -45,12 +45,16 @@ prisma.$on('query', (e: Prisma.QueryEvent) => {
 	console.log(`Query ${e.target} took ${e.duration}ms`);
 });
 
-// @ts-ignore
-prisma.$on('beforeExit', () => {
-	console.log('Prisma client is shutting down');
-	prisma.$disconnect();
-});
-
 export default prisma;
 
 if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+
+process.on('beforeExit', async () => {
+	await prisma.$disconnect();
+}).on('SIGINT', async () => {
+	await prisma.$disconnect();
+}).on('SIGTERM', async () => {
+	await prisma.$disconnect();
+}).on('SIGQUIT', async () => {
+	await prisma.$disconnect();
+});

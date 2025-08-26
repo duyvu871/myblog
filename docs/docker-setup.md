@@ -1,6 +1,6 @@
 # Docker Setup Guide
 
-This guide explains how to set up and run the Student Management System using Docker.
+This guide explains how to set up and run the Nextjs 15 template using Docker.
 
 ## Overview
 

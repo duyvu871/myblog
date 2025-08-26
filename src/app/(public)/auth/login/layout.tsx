@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Đăng nhập',
-  description: 'Đăng nhập vào hệ thống quản lý học sinh',
+  title: 'Login Page',
+  description: 'Login Page Description',
 };
 
 export default function LoginLayout({

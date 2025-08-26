@@ -1,19 +1,19 @@
 ## Providers
 
-Thư mục `providers` chứa các React Context Providers để chia sẻ state/dịch vụ dùng chung trên toàn ứng dụng (theme, auth, i18n, configs, cache...). Mỗi provider nên nhỏ gọn, tách biệt theo domain và dễ kết hợp (composition).
+The `providers` directory contains React Context Providers for sharing state/services across the entire application (theme, auth, i18n, configs, cache...). Each provider should be compact, separated by domain, and easy to compose.
 
-### Quy ước
-- Mỗi provider nằm ở file riêng, tên dạng `<feature>-provider.tsx` và export:
-  - `Context` (vd: `AppProviderContext`)
-  - `Provider` (vd: `AppProvider`)
-  - Hook truy cập (vd: `useAppProvider`)
-- Ưu tiên named exports, tránh default nếu không cần.
-- Provider dùng hooks (state, effect) phải là client component (cân nhắc thêm `"use client"`).
-- Tránh nhồi quá nhiều trách nhiệm vào một provider; tách theo domain và lồng ghép ở “root providers”.
+### Conventions
+- Each provider is in its own file, named `<feature>-provider.tsx` and exports:
+  - `Context` (e.g., `AppProviderContext`)
+  - `Provider` (e.g., `AppProvider`)
+  - Access hook (e.g., `useAppProvider`)
+- Prefer named exports, avoid default if not needed.
+- Providers using hooks (state, effect) must be client components (consider adding `"use client"`).
+- Avoid stuffing too many responsibilities into one provider; separate by domain and compose at "root providers".
 
-### Cách mở rộng `AppProvider`
+### How to Extend `AppProvider`
 ```tsx
-// apps/web/main/src/providers/app-provider.tsx (ví dụ mở rộng)
+// apps/web/main/src/providers/app-provider.tsx (extension example)
 "use client";
 import React, { createContext, useContext, useMemo, useState } from "react";
 
@@ -39,9 +39,9 @@ export function AppProvider({ children }: AppProviderProps) {
 }
 ```
 
-### Sử dụng
+### Usage
 ```tsx
-// Root app/layout.tsx bọc ứng dụng bằng provider
+// Root app/layout.tsx wrapping application with provider
 import { AppProvider } from "@/providers/app-provider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 ```tsx
-// Bên trong component bất kỳ: truy cập context qua hook
+// Inside any component: access context via hook
 import { useAppProvider } from "@/providers/app-provider";
 
 export function ProfileButton() {
@@ -65,7 +65,7 @@ export function ProfileButton() {
 }
 ```
 
-### Tổ chức nhiều provider (composition)
+### Multiple Provider Organization (composition)
 ```tsx
 // providers/root-providers.tsx
 import { AppProvider } from "@/providers/app-provider";
@@ -84,13 +84,13 @@ export function RootProviders({ children }: { children: React.ReactNode }) {
 ```
 
 ### Best practices
-- Tuân thủ React hooks rules; giữ state càng gần nơi dùng càng tốt.
-- Memo hóa `value` của provider bằng `useMemo` để tránh re-render không cần thiết.
-- Tách nhỏ providers theo domain; dễ thay thế/test.
-- Hook `useXxxProvider` nên throw error khi dùng ngoài provider để fail-fast.
-- Không đưa logic nặng (fetch liên tục, tính toán lớn) vào provider; chuyển sang services hoặc hooks riêng.
+- Follow React hooks rules; keep state as close to where it's used as possible.
+- Memoize provider `value` with `useMemo` to avoid unnecessary re-renders.
+- Split providers by domain; easier to replace/test.
+- Hook `useXxxProvider` should throw error when used outside provider for fail-fast.
+- Don't put heavy logic (continuous fetch, large calculations) in provider; move to services or separate hooks.
 
-### Testing nhanh
+### Quick Testing
 ```tsx
 // test-utils.tsx
 import { render } from "@testing-library/react";

@@ -1,11 +1,11 @@
-# Student Management System - Makefile
+# Makefile
 # Development and production commands
 
 .PHONY: help dev dev-db dev-stop dev-clean build prod prod-stop prod-clean logs db-migrate db-seed test lint format
 
 # Default target
 help:
-	@echo "Student Management System - Available Commands:"
+	@echo "Nextjs 15 template - Available Commands:"
 	@echo ""
 	@echo "Development:"
 	@echo "  make dev          - Start development environment (DB + Redis only)"
@@ -71,7 +71,7 @@ dev-clean:
 # Production Environment
 build:
 	@echo "🔨 Building production Docker image..."
-	docker build -t student-management:latest .
+	docker build -t nextjs-15-template:latest .
 	@echo "✅ Production image built successfully"
 
 prod:

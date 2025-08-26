@@ -1,6 +1,6 @@
 # Environment Variables Documentation
 
-Comprehensive guide for configuring environment variables in the Student Management System.
+Comprehensive guide for configuring environment variables in the Nextjs 15 starter template
 
 ## 🚀 Quick Start
 
@@ -146,7 +146,7 @@ Client-side accessible variables (must start with `NEXT_PUBLIC_`).
 ```bash
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
-NEXT_PUBLIC_APP_NAME="Student Management System"
+NEXT_PUBLIC_APP_NAME="Nextjs 15 template"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
 NEXT_PUBLIC_LOG_LEVEL="info"
 ```
@@ -320,4 +320,4 @@ npm run redis:test
 - [ ] Secrets rotated regularly
 - [ ] Environment-specific configurations
 
-This documentation ensures proper configuration and security for all environments in the Student Management System.
+This documentation ensures proper configuration and security for all environments in the Nextjs 15 template System.

@@ -1,39 +1,39 @@
 
-### Cấu hình chung cho `src/sections`
+### General Configuration for `src/sections`
 
-- **Mục tiêu**: Gom mã theo domain/feat (auth, notifications, explore, profile, post-detail, message, bookmark, home, settings, followers). Mỗi miền tự chứa trang (`view/`), phần tử con (`components/`/`subsections/`), dữ liệu cục bộ (`data/`), và tiện ích riêng (`utils/` khi cần).
-- **Entry-point trang**: `view/` chứa component trang chính `*-view.tsx`, được import trực tiếp từ App Router.
-- **Dữ liệu & schema**: đặt ở `data/` (Zod schemas, mock), re-export qua `data/index.ts`.
-- **Tổ chức UI**: UI con/khối phức tạp vào `components/` hoặc `subsections/` (ví dụ settings).
-- **Export**: Ưu tiên barrel `view/index.ts` để import gọn từ route: `import { XxxView } from '@/sections/<domain>/view'`.
-- **Tránh phụ thuộc chéo**: Nếu cần dùng chung, đẩy lên `src/components/` dùng lại.
+- **Objective**: Group code by domain/feature (auth, notifications, explore, profile, post-detail, message, bookmark, home, settings, followers). Each domain contains its own pages (`view/`), sub-components (`components/`/`subsections/`), local data (`data/`), and specific utilities (`utils/` when needed).
+- **Page entry-point**: `view/` contains the main page component `*-view.tsx`, imported directly from App Router.
+- **Data & schema**: placed in `data/` (Zod schemas, mock), re-exported via `data/index.ts`.
+- **UI organization**: Sub-UI/complex blocks go into `components/` or `subsections/` (e.g., settings).
+- **Export**: Prefer barrel `view/index.ts` for clean imports from routes: `import { XxxView } from '@/sections/<domain>/view'`.
+- **Avoid cross-dependencies**: If shared usage is needed, move to `src/components/` for reuse.
 
-### Cấu trúc gợi ý
+### Suggested Structure
 ```
 sections/
   <domain>/
     view/
       <domain>-view.tsx
       index.ts              # export { <Domain>View }
-    components/             # (nếu có)
-    <subsections>/            # (settings, v.v.)
+    components/             # (if needed)
+    <subsections>/            # (settings, etc.)
     data/
       schema.ts
       index.ts
-    utils/                  # (nếu có)
+    utils/                  # (if needed)
 ```
 
-### Import mẫu ở route
+### Sample Route Import
 ```ts
 import { ExploreView } from '@/sections/explore/view';
 import { ProfileView } from '@/sections/profile/view';
 import { MessageView } from '@/sections/message/view';
 ```
-Hoặc (khi chưa có barrel): `import SettingsView from '@/sections/settings/view/setting-view'`.
+Or (when barrel doesn't exist): `import SettingsView from '@/sections/settings/view/setting-view'`.
 
-### Ví dụ: `auth`
+### Example: `auth`
 
-Cấu trúc:
+Structure:
 ```
 sections/auth/
   data/
@@ -45,7 +45,7 @@ sections/auth/
     index.ts              # export { LoginView, RegisterView }
 ```
 
-- Route sử dụng:
+- Route usage:
 
 - /auth/login/page.tsx
 
@@ -70,7 +70,7 @@ export default function RegisterPage() {
 }
 ```
 
-- Schema và re-export:
+- Schema and re-export:
 ```ts
 import { z } from 'zod';
 
@@ -91,15 +91,15 @@ export {
 } from './schema';
 ```
 
-- `LoginView` dùng schema để validate và gọi API đăng nhập:
+- `LoginView` uses schema to validate and call login API:
 
-- `RegisterView` tương tự, dùng `registerSchema` và `register` API.
+- `RegisterView` similarly uses `registerSchema` and `register` API.
 
-### Gợi ý thống nhất nhanh
-- Mỗi `view/` có `index.ts` export named `XxxView`; route import từ `@/sections/<domain>/view`.
-- Chuẩn hóa tên export `home/view/index.ts` để khớp với route (đang export `PostListView` trong khi route dùng `HomeView`).
+### Quick Standardization Tips
+- Each `view/` has `index.ts` exporting named `XxxView`; routes import from `@/sections/<domain>/view`.
+- Standardize export names in `home/view/index.ts` to match routes (currently exports `PostListView` while route uses `HomeView`).
 
 - - -
 
-- Đã tổng hợp cấu hình chung cho `sections` và ví dụ chi tiết cho `auth` (schema, view, route).
-- Nếu bạn muốn, tôi có thể thêm/điều chỉnh các `index.ts` còn thiếu để chuẩn hóa import từ tất cả các section.
+- Summarized general configuration for `sections` and detailed example for `auth` (schema, view, route).
+- If you want, I can add/adjust missing `index.ts` files to standardize imports from all sections.

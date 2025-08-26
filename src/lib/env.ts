@@ -30,16 +30,19 @@ const envSchema = z.object({
   PORT: z.string().regex(/^\d+$/, 'PORT must be a number').default('3000'),
 
   // Email Configuration (Optional)
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().regex(/^\d+$/, 'SMTP_PORT must be a number').optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
+  SMTP_HOST: z.string().optional().or(z.literal('')),
+  SMTP_PORT: z.string().optional().or(z.literal('')).refine(
+    (val) => !val || /^\d+$/.test(val),
+    { message: 'SMTP_PORT must be a number or empty' }
+  ),
+  SMTP_USER: z.string().optional().or(z.literal('')),
+  SMTP_PASS: z.string().optional().or(z.literal('')),
 
   // OAuth Providers (Optional)
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  AUTH_GOOGLE_ID: z.string().optional(),
-  AUTH_GOOGLE_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional().or(z.literal('')),
+  GOOGLE_CLIENT_SECRET: z.string().optional().or(z.literal('')),
+  AUTH_GOOGLE_ID: z.string().optional().or(z.literal('')),
+  AUTH_GOOGLE_SECRET: z.string().optional().or(z.literal('')),
 
   // File Upload Configuration
   MAX_FILE_SIZE: z.string().regex(/^\d+$/, 'MAX_FILE_SIZE must be a number').default('5242880'),
@@ -59,8 +62,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url().optional(),
   NEXT_PUBLIC_SOCKET_URL: z.string().url().optional(),
   NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: z.string().optional(),
-  NEXT_PUBLIC_APP_NAME: z.string().default('Student Management System'),
+  NEXT_PUBLIC_APP_NAME: z.string().default('Next.js 15 Starter Template'),
   NEXT_PUBLIC_APP_VERSION: z.string().default('1.0.0'),
+  NEXT_PUBLIC_LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']).default('info'),
 });
 
 /**
@@ -145,11 +149,14 @@ export const authConfig = {
  * Email configuration object
  */
 export const emailConfig = {
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT ? parseInt(env.SMTP_PORT, 10) : undefined,
-  user: env.SMTP_USER,
-  password: env.SMTP_PASS,
-  enabled: !!(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS),
+  host: env.SMTP_HOST || undefined,
+  port: env.SMTP_PORT && env.SMTP_PORT !== '' ? parseInt(env.SMTP_PORT, 10) : undefined,
+  user: env.SMTP_USER || undefined,
+  password: env.SMTP_PASS || undefined,
+  enabled: !!(env.SMTP_HOST && env.SMTP_HOST !== '' && 
+             env.SMTP_PORT && env.SMTP_PORT !== '' && 
+             env.SMTP_USER && env.SMTP_USER !== '' && 
+             env.SMTP_PASS && env.SMTP_PASS !== ''),
 } as const;
 
 /**
@@ -157,10 +164,14 @@ export const emailConfig = {
  */
 export const oauthConfig = {
   google: {
-    clientId: env.GOOGLE_CLIENT_ID || env.AUTH_GOOGLE_ID,
-    clientSecret: env.GOOGLE_CLIENT_SECRET || env.AUTH_GOOGLE_SECRET,
-    enabled: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) || 
-             !!(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET),
+    clientId: (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== '') ? env.GOOGLE_CLIENT_ID : 
+              (env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_ID !== '') ? env.AUTH_GOOGLE_ID : undefined,
+    clientSecret: (env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== '') ? env.GOOGLE_CLIENT_SECRET : 
+                  (env.AUTH_GOOGLE_SECRET && env.AUTH_GOOGLE_SECRET !== '') ? env.AUTH_GOOGLE_SECRET : undefined,
+    enabled: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== '' && 
+               env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== '') || 
+             !!(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_ID !== '' && 
+               env.AUTH_GOOGLE_SECRET && env.AUTH_GOOGLE_SECRET !== ''),
   },
 } as const;
 

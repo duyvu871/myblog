@@ -1,6 +1,6 @@
 # Authentication Feature
 
-Comprehensive authentication system for the Student Management application, implementing secure user registration, login, and session management with modern UI/UX patterns.
+Comprehensive authentication system for the Nextjs 15 template application, implementing secure user registration, login, and session management with modern UI/UX patterns.
 
 ## 🏗️ Architecture Overview
 
@@ -638,8 +638,8 @@ app/(public)/auth/
 ```typescript
 // page.tsx
 export const metadata = {
-  title: 'Login - Student Management',
-  description: 'Sign in to your Student Management account',
+  title: 'Login Page',
+  description: 'Login Page description',
 };
 ```
 

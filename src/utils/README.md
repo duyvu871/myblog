@@ -1,17 +1,17 @@
-# Utils Library - Student Management System
+# Utils Library
 
-Thư viện tiện ích toàn diện cho ứng dụng Student Management System được xây dựng trên Next.js 15 với App Router, TypeScript, và Tailwind CSS.
+Comprehensive utility library built on Next.js 15 with App Router, TypeScript, and Tailwind CSS.
 
 ## 🚀 Features
 
-- ✅ **Error Handling & Response System** - Hệ thống xử lý lỗi và chuẩn hóa response
-- ✅ **Validation Utilities** - Các hàm validation với Zod schemas
+- ✅ **Error Handling & Response System** - Error handling system and response standardization
+- ✅ **Validation Utilities** - Validation functions with Zod schemas
 - ✅ **Formatting Functions** - Format date, currency, phone number, etc.
 - ✅ **Helper Functions** - Debounce, throttle, deep clone, object manipulation
 - ✅ **Class Name Utilities** - Merge Tailwind CSS classes
 - ✅ **Tailwind Variants** - Type-safe component variants
-- ✅ **TypeScript Support** - Fully typed với IntelliSense
-- ✅ **Server Actions & API Routes** - HOCs với error handling
+- ✅ **TypeScript Support** - Fully typed with IntelliSense
+- ✅ **Server Actions & API Routes** - HOCs with error handling
 - ✅ **Authentication & Authorization** - Auth helpers
 
 ## 📁 File Structure
@@ -19,11 +19,11 @@ Thư viện tiện ích toàn diện cho ứng dụng Student Management System 
 ```
 src/utils/
 ├── response.ts              # Response types, error classes, builders
-├── with-error-handling.ts   # HOCs cho error handling
+├── with-error-handling.ts   # HOCs for error handling
 ├── examples/               
 │   └── error-handling-examples.ts  # Usage examples
-├── index.ts                # Export tất cả utilities
-└── README.md               # Documentation này
+├── index.ts                # Export all utilities
+└── README.md               # This documentation
 ```
 
 ## 🔧 Usage
@@ -41,10 +41,10 @@ const rawCreateUser = async (userData: { name: string; email: string }) => {
   return { id: '1', ...userData };
 };
 
-// Wrapped với error handling
+// Wrapped with error handling
 export const createUser = withServerActionErrorHandling(rawCreateUser);
 
-// Sử dụng trong component
+// Usage in component
 const handleSubmit = async (formData: FormData) => {
   const result = await createUser({
     name: formData.get('name') as string,
@@ -191,7 +191,7 @@ throw new AppError('CUSTOM_CODE', 'Custom message', 400);
 
 ## 🛠 Advanced Usage
 
-### Validation với Zod
+### Validation with Zod
 
 ```typescript
 import { withValidatedServerAction, ValidationError } from '@/utils';
@@ -222,7 +222,7 @@ export const createUser = withValidatedServerAction(rawCreateUser, validateUserD
 ```typescript
 import { withDevLogging } from '@/utils';
 
-// Enhanced logging chỉ trong development
+// Enhanced logging only in development
 const createUser = withDevLogging(
   withServerActionErrorHandling(rawCreateUser)
 );
@@ -243,9 +243,9 @@ export const POST = withCorsApi(handler);
 
 ## 🔒 Security Features
 
-- Automatic error sanitization trong production
-- Detailed error info chỉ trong development  
-- Request logging với user-agent và URL
+- Automatic error sanitization in production
+- Detailed error info only in development  
+- Request logging with user-agent and URL
 - Rate limiting integration ready
 - CORS configuration
 
@@ -292,7 +292,7 @@ const MyComponent = () => {
 
 ## 📊 Monitoring & Debugging
 
-Tất cả errors được log với format:
+All errors are logged with format:
 
 ```typescript
 {
@@ -300,7 +300,7 @@ Tất cả errors được log với format:
   code: string,
   details?: any,
   action?: string,      // Server Action name
-  method?: string,      // HTTP method cho API
+  method?: string,      // HTTP method for API
   url?: string,         // Request URL
   userAgent?: string,   // User agent
   timestamp: string,
@@ -310,18 +310,18 @@ Tất cả errors được log với format:
 
 ## 🚀 Best Practices
 
-1. **Luôn sử dụng HOCs** cho error handling
-2. **Throw specific error classes** thay vì generic Error
-3. **Handle errors ở client side** based on error codes
-4. **Log errors** trong production để debugging
-5. **Sanitize error details** trong production
-6. **Use TypeScript** để type safety
+1. **Always use HOCs** for error handling
+2. **Throw specific error classes** instead of generic Error
+3. **Handle errors on client side** based on error codes
+4. **Log errors** in production for debugging
+5. **Sanitize error details** in production
+6. **Use TypeScript** for type safety
 7. **Test error scenarios** thoroughly
 
-## 🔄 Migration từ hệ thống cũ
+## 🔄 Migration from Legacy System
 
 ```typescript
-// Trước
+// Before
 const action = async (data: any) => {
   try {
     const result = await doSomething(data);
@@ -331,7 +331,7 @@ const action = async (data: any) => {
   }
 };
 
-// Sau
+// After
 const rawAction = async (data: any) => {
   return await doSomething(data); // Let HOC handle errors
 };

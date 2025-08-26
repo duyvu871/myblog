@@ -49,7 +49,7 @@ export const redirectToLogin = withServerActionErrorHandling(rawRedirectToLogin)
 export const redirectToDashboard = withServerActionErrorHandling(rawRedirectToDashboard);
 export const redirectToHome = withServerActionErrorHandling(rawRedirectToHome);
 export const redirectToGoogle = withServerActionErrorHandling(
-  (callbackUrl?: string) => rawRedirectToOAuth('google', callbackUrl)
+  async (callbackUrl?: string) => await rawRedirectToOAuth('google', callbackUrl)
 );
 
 

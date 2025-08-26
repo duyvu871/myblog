@@ -552,8 +552,6 @@ export const changePasswordAction = withServerActionErrorHandling(rawChangePassw
 
 export const verifyEmailAction = withServerActionErrorHandling(rawVerifyEmailAction);
 
-// Export types for use in components
-export type { LoginInput, RegisterInput };
 
 // Export utility functions for external use
 export { hashPassword, verifyPassword, generateToken };

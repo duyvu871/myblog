@@ -1,6 +1,6 @@
 # Auth Section
 
-Phần xử lý xác thực (authentication) cho Student Management System, bao gồm đăng nhập, đăng ký và quản lý phiên người dùng.
+Phần xử lý xác thực (authentication) cho Nextjs 15 template, bao gồm đăng nhập, đăng ký và quản lý phiên người dùng.
 
 ## 🚀 Features
 
@@ -315,8 +315,8 @@ interface RegisterViewProps {
 ```typescript
 // app/(public)/auth/login/page.tsx
 export const metadata = {
-  title: 'Login - Student Management',
-  description: 'Sign in to your Student Management account',
+  title: 'Login Page',
+  description: 'Login Page description',
 };
 ```
 
