@@ -17,10 +17,10 @@
   ],
   "author": "Bui An Du",
   "license": "MIT",
-  "homepage": "https://github.com/buian123456789/boiler-next",
+  "homepage": "https://github.com/duyvu871/boiler-next",
   "repository": {
     "type": "git",
-    "url": "https://github.com/buian123456789/boiler-next.git"
+    "url": "https://github.com/duyvu871/boiler-next.git"
   },
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--inspect' next dev --turbopack",
