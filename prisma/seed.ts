@@ -1,7 +1,14 @@
-import { PrismaClient, Role, AccountProvider, UserStatus } from '@prisma/client';
+import { PrismaClient, Role, AccountProvider, UserStatus, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+interface SeedUsers {
+  adminUser: User;
+  user1: User;
+  user2: User;
+  oauthUser: User;
+}
 
 /**
  * Hash password using bcrypt
@@ -14,8 +21,7 @@ async function hashPassword(password: string): Promise<string> {
  * Generate a random token for password reset or email verification
  */
 function generateToken(): string {
-  return Math.random().toString(36).substring(2, 15) + 
-         Math.random().toString(36).substring(2, 15);
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 /**
@@ -39,100 +45,46 @@ async function createUsers() {
     },
   });
 
-  // Teacher users
-  const teacher1 = await prisma.user.create({
+  // Regular user 1
+  const user1 = await prisma.user.create({
     data: {
-      name: 'Dr. Sarah Johnson',
-      email: 'sarah.johnson@school.edu',
-      password: await hashPassword('TeacherPass123'),
-      role: Role.TEACHER,
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: await hashPassword('UserPass123'),
+      role: Role.USER,
       status: UserStatus.ACTIVE,
       emailVerified: new Date(),
       phone: '+1234567891',
-      bio: 'Mathematics professor with 10+ years of experience.',
-      lastLoginAt: new Date(Date.now() - 86400000), // 1 day ago
+      bio: 'Regular user for testing purposes.',
+      lastLoginAt: new Date(),
     },
   });
 
-  const teacher2 = await prisma.user.create({
+  // Regular user 2
+  const user2 = await prisma.user.create({
     data: {
-      name: 'Prof. Michael Chen',
-      email: 'michael.chen@school.edu',
-      password: await hashPassword('TeacherPass123'),
-      role: Role.TEACHER,
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      password: await hashPassword('UserPass123'),
+      role: Role.USER,
       status: UserStatus.ACTIVE,
       emailVerified: new Date(),
       phone: '+1234567892',
-      bio: 'Computer Science professor specializing in web development.',
-      lastLoginAt: new Date(Date.now() - 172800000), // 2 days ago
+      bio: 'Another regular user for testing.',
+      lastLoginAt: new Date(),
     },
   });
 
-  // Student users
-  const student1 = await prisma.user.create({
-    data: {
-      name: 'John Doe',
-      email: 'john.doe@student.edu',
-      password: await hashPassword('StudentPass123'),
-      role: Role.STUDENT,
-      status: UserStatus.ACTIVE,
-      emailVerified: new Date(),
-      phone: '+1234567893',
-      bio: 'Computer Science major, Class of 2025.',
-      lastLoginAt: new Date(Date.now() - 3600000), // 1 hour ago
-    },
-  });
-
-  const student2 = await prisma.user.create({
-    data: {
-      name: 'Jane Smith',
-      email: 'jane.smith@student.edu',
-      password: await hashPassword('StudentPass123'),
-      role: Role.STUDENT,
-      status: UserStatus.ACTIVE,
-      emailVerified: new Date(),
-      phone: '+1234567894',
-      bio: 'Mathematics major, passionate about problem solving.',
-      lastLoginAt: new Date(Date.now() - 7200000), // 2 hours ago
-    },
-  });
-
-  const student3 = await prisma.user.create({
-    data: {
-      name: 'Alice Wilson',
-      email: 'alice.wilson@student.edu',
-      password: await hashPassword('StudentPass123'),
-      role: Role.STUDENT,
-      status: UserStatus.PENDING_VERIFICATION,
-      phone: '+1234567895',
-      bio: 'New student, just registered.',
-    },
-  });
-
-  // Inactive/Suspended users for testing
-  const suspendedUser = await prisma.user.create({
-    data: {
-      name: 'Bob Brown',
-      email: 'bob.brown@student.edu',
-      password: await hashPassword('StudentPass123'),
-      role: Role.STUDENT,
-      status: UserStatus.SUSPENDED,
-      emailVerified: new Date(),
-      phone: '+1234567896',
-      bio: 'Account suspended for policy violation.',
-    },
-  });
-
-  // OAuth user (Google sign-in)
+  // OAuth user (no password)
   const oauthUser = await prisma.user.create({
     data: {
-      name: 'Emma Google',
-      email: 'emma.google@gmail.com',
-      password: null, // OAuth users don't have passwords
-      role: Role.STUDENT,
+      name: 'OAuth User',
+      email: 'oauth@example.com',
+      password: null, // OAuth user, no password
+      role: Role.USER,
       status: UserStatus.ACTIVE,
       emailVerified: new Date(),
-      bio: 'Signed up using Google OAuth.',
+      bio: 'User who signed up via OAuth provider.',
       lastLoginAt: new Date(),
     },
   });
@@ -141,12 +93,8 @@ async function createUsers() {
 
   return {
     adminUser,
-    teacher1,
-    teacher2,
-    student1,
-    student2,
-    student3,
-    suspendedUser,
+    user1,
+    user2,
     oauthUser,
   };
 }
@@ -154,7 +102,7 @@ async function createUsers() {
 /**
  * Create OAuth accounts for testing
  */
-async function createAccounts(users: any) {
+async function createAccounts(users: SeedUsers) {
   console.log('🔗 Creating OAuth accounts...');
 
   // Create Google account for OAuth user
@@ -193,7 +141,7 @@ async function createAccounts(users: any) {
 /**
  * Create active sessions for testing
  */
-async function createSessions(users: any) {
+async function createSessions(users: SeedUsers) {
   console.log('🎫 Creating user sessions...');
 
   // Active session for admin
@@ -207,22 +155,22 @@ async function createSessions(users: any) {
     },
   });
 
-  // Active session for student1
+  // Active session for user1
   await prisma.session.create({
     data: {
-      userId: users.student1.id,
-      sessionToken: 'session-token-student1-' + generateToken(),
+      userId: users.user1.id,
+      sessionToken: 'session-token-user1-' + generateToken(),
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       ipAddress: '192.168.1.101',
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
     },
   });
 
-  // Expired session for teacher1 (for testing cleanup)
+  // Expired session for user2 (for testing cleanup)
   await prisma.session.create({
     data: {
-      userId: users.teacher1.id,
-      sessionToken: 'session-token-teacher1-expired-' + generateToken(),
+      userId: users.user2.id,
+      sessionToken: 'session-token-user2-expired-' + generateToken(),
       expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Expired 1 day ago
       ipAddress: '192.168.1.102',
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15',
@@ -235,13 +183,13 @@ async function createSessions(users: any) {
 /**
  * Create password reset tokens for testing
  */
-async function createPasswordResets(users: any) {
+async function createPasswordResets(users: SeedUsers) {
   console.log('🔑 Creating password reset tokens...');
 
-  // Active password reset for student2
+  // Active password reset for user2
   await prisma.passwordReset.create({
     data: {
-      email: users.student2.email,
+      email: users.user2.email,
       token: 'reset-token-' + generateToken(),
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
       used: false,
@@ -251,7 +199,7 @@ async function createPasswordResets(users: any) {
   // Used password reset token (for testing)
   await prisma.passwordReset.create({
     data: {
-      email: users.teacher1.email,
+      email: users.oauthUser.email,
       token: 'reset-token-used-' + generateToken(),
       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       used: true,
@@ -261,7 +209,7 @@ async function createPasswordResets(users: any) {
   // Expired password reset token (for testing cleanup)
   await prisma.passwordReset.create({
     data: {
-      email: users.student1.email,
+      email: users.user1.email,
       token: 'reset-token-expired-' + generateToken(),
       expiresAt: new Date(Date.now() - 60 * 60 * 1000), // Expired 1 hour ago
       used: false,
@@ -274,13 +222,13 @@ async function createPasswordResets(users: any) {
 /**
  * Create email verification tokens for testing
  */
-async function createEmailVerifications(users: any) {
+async function createEmailVerifications(users: SeedUsers) {
   console.log('📧 Creating email verification tokens...');
 
-  // Pending email verification for student3 (unverified user)
+  // Pending email verification for user1 (unverified user)
   await prisma.emailVerification.create({
     data: {
-      email: users.student3.email,
+      email: users.user1.email,
       token: 'verify-token-' + generateToken(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
       verified: false,
@@ -290,7 +238,7 @@ async function createEmailVerifications(users: any) {
   // Used email verification token (for testing)
   await prisma.emailVerification.create({
     data: {
-      email: users.student1.email,
+      email: users.user1.email,
       token: 'verify-token-used-' + generateToken(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       verified: true,
@@ -316,7 +264,7 @@ async function createEmailVerifications(users: any) {
 async function printSummary() {
   console.log('\n📊 Database Seed Summary:');
   console.log('========================');
-  
+
   const userCounts = await prisma.user.groupBy({
     by: ['role', 'status'],
     _count: true,

@@ -14,7 +14,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const message = searchParams.get('message');
+    const message = searchParams?.get('message');
     if (message) {
       setSuccessMessage(message);
     }
@@ -23,9 +23,9 @@ export default function LoginPage() {
   const handleLogin = async (data: LoginInput) => {
     setIsLoading(true);
     setError(null);
-    
+
     const result = await loginAction(data);
-    
+
     if (result.success) {
       // Redirect to dashboard on successful login
       router.push('/dashboard');
@@ -33,13 +33,13 @@ export default function LoginPage() {
       // Display error message
       setError(result.error.message);
     }
-    
+
     setIsLoading(false);
   };
 
   return (
-    <LoginView 
-      onSubmit={handleLogin} 
+    <LoginView
+      onSubmit={handleLogin}
       isLoading={isLoading}
       error={error}
       successMessage={successMessage}
