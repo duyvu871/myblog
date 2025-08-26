@@ -1,16 +1,33 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from 'db/client';
+
+const clientOptions = {
+	log: [
+		{
+			emit: 'event',
+			level: 'query',
+		},
+		{
+			emit: 'stdout',
+			level: 'error',
+		},
+		{
+			emit: 'stdout',
+			level: 'info',
+		},
+		{
+			emit: 'stdout',
+			level: 'warn',
+		},
+	],
+} as Prisma.PrismaClientOptions;
 
 const prismaClientSingleton = (): PrismaClient => {
-	return new PrismaClient({
-		...(process.env.NODE_ENV === "development" && {
-			log: ['query', 'info', 'warn', 'error'],
-		})
-	});
+	return new PrismaClient(clientOptions);
 };
 
 declare global {
 	var prisma: undefined | PrismaClient;
-	interface BigInt {
+	interface BigInt {	
 		toJSON(): string;
 	}
 }
@@ -23,16 +40,15 @@ const prisma: PrismaClient = globalThis.prisma ?? prismaClientSingleton();
 
 
 // log query time for prisma
-prisma.$use(async (params, next) => {
-	const before = Date.now();
+// @ts-ignore
+prisma.$on('query', (e: Prisma.QueryEvent) => {
+	console.log(`Query ${e.target} took ${e.duration}ms`);
+});
 
-	const result = await next(params);
-
-	const after = Date.now();
-
-	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
-
-	return result;
+// @ts-ignore
+prisma.$on('beforeExit', () => {
+	console.log('Prisma client is shutting down');
+	prisma.$disconnect();
 });
 
 export default prisma;

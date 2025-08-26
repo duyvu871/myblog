@@ -41,6 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# cursor
-.cursor
-.cursorignore
+# # cursor
+# .cursor
+# .cursorignore
+
+# prisma
+generated/db/client
+generated/db/migrations

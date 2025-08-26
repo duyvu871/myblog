@@ -2,7 +2,7 @@
 
 import { withServerActionErrorHandling, ValidationError, AuthenticationError, ConflictError, logAuth, logBusiness } from 'app/utils';
 import { LoginSchema, RegisterSchema, type LoginInput, type RegisterInput } from './schemas';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 // import { signIn } from '@/lib/auth'; // TODO: Implement NextAuth.js integration
 
@@ -184,7 +184,7 @@ const rawRegisterAction = async (data: RegisterInput) => {
         name: validatedData.name,
         email: validatedData.email,
         password: hashedPassword,
-        role: 'STUDENT', // Default role for new registrations
+        role: Role.USER, // Default role for new registrations
         status: UserStatus.PENDING_VERIFICATION, // Require email verification
       },
       select: {

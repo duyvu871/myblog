@@ -1,7 +1,27 @@
 {
-  "name": "student-management",
+  "name": "boiler-next",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
+  "keywords": [
+    "nextjs",
+    "starter",
+    "template",
+    "mantine",
+    "tailwind",
+    "typescript",
+    "react",
+    "nextjs",
+    "next-auth",
+    "prisma"
+  ],
+  "author": "Bui An Du",
+  "license": "MIT",
+  "homepage": "https://github.com/buian123456789/boiler-next",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/buian123456789/boiler-next.git"
+  },
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--inspect' next dev --turbopack",
     "build": "prisma generate && next build --turbopack",
@@ -50,6 +70,7 @@
     "jotai": "^2.13.1",
     "lucide-react": "^0.540.0",
     "next": "15.5.0",
+    "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "prisma": "^6.14.0",
     "react": "19.1.0",
@@ -69,6 +90,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/winston": "^2.4.4",
+    "dotenv": "^17.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
     "postcss": "^8.5.6",
@@ -77,10 +99,7 @@
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   }
 }
