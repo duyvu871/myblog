@@ -30,3 +30,11 @@ export {
   verifyPassword,
   generateToken,
 } from './action';
+
+// Export NextAuth redirect actions
+export {
+  redirectToLogin,
+  redirectToDashboard,
+  redirectToHome,
+  redirectToGoogle,
+} from './nextauth-actions';

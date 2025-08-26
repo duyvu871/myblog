@@ -55,6 +55,7 @@ declare global {
 			NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?: string;
 			NEXT_PUBLIC_APP_NAME?: string;
 			NEXT_PUBLIC_APP_VERSION?: string;
+			NEXT_PUBLIC_LOG_LEVEL?: 'error' | 'warn' | 'info' | 'http' | 'verbose' | 'debug' | 'silly';
 		}
 	}
 }
