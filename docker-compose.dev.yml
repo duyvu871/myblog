@@ -1,16 +1,16 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database for Development
   postgres-dev:
     image: postgres:15-alpine
     container_name: student-management-postgres-dev
     restart: unless-stopped
+    env_file:
+      - .env.local
     environment:
-      POSTGRES_DB: student_management_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD}
     ports:
       - "5432:5432"
     volumes:
@@ -47,6 +47,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: student-management-pgadmin-dev
     restart: unless-stopped
+    env_file:
+      - .env.local
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@student-management.dev
       PGADMIN_DEFAULT_PASSWORD: admin123

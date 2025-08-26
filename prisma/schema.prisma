@@ -15,8 +15,7 @@ datasource db {
 
 enum Role {
   ADMIN
-  TEACHER
-  STUDENT
+  USER
 }
 
 enum AccountProvider {
@@ -34,14 +33,14 @@ enum UserStatus {
 
 // Main user model
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   name          String
   email         String    @unique
   password      String?   // Nullable for OAuth users
   phone         String?
   bio           String?   @db.Text
   avatar        String?
-  role          Role      @default(STUDENT)
+  role          Role      @default(USER)
   status        UserStatus @default(PENDING_VERIFICATION)
   emailVerified DateTime?
   lastLoginAt   DateTime?
@@ -54,18 +53,12 @@ model User {
   passwordResets   PasswordReset[]
   emailVerifications EmailVerification[]
 
-  // Application-specific relations (for future features)
-  // studentProfile   StudentProfile?
-  // teacherProfile   TeacherProfile?
-  // courses          Course[]
-  // enrollments      Enrollment[]
-
   @@map("users")
 }
 
 // OAuth accounts (Google, GitHub, etc.)
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id @default(uuid())
   userId            String
   provider          AccountProvider
   providerAccountId String
@@ -87,7 +80,7 @@ model Account {
 
 // User sessions for authentication
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   sessionToken String   @unique
   userId       String
   expiresAt    DateTime
@@ -103,7 +96,7 @@ model Session {
 
 // Password reset tokens
 model PasswordReset {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String
   token     String   @unique
   expiresAt DateTime
@@ -117,7 +110,7 @@ model PasswordReset {
 
 // Email verification tokens
 model EmailVerification {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String
   token     String   @unique
   expiresAt DateTime

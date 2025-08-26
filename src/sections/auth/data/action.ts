@@ -1,6 +1,6 @@
 'use server';
 
-import { withServerActionErrorHandling, ValidationError, AuthenticationError, ConflictError } from 'app/utils';
+import { withServerActionErrorHandling, ValidationError, AuthenticationError, ConflictError, logAuth, logBusiness } from 'app/utils';
 import { LoginSchema, RegisterSchema, type LoginInput, type RegisterInput } from './schemas';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
@@ -64,30 +64,54 @@ const rawLoginAction = async (data: LoginInput) => {
 
     // Check if user exists
     if (!user) {
+      logAuth('LOGIN_FAILED', undefined, {
+        email: validatedData.email,
+        reason: 'user_not_found',
+      });
       throw new AuthenticationError('Invalid email or password');
     }
 
     // Check if user has a password (not OAuth-only user)
     if (!user.password) {
+      logAuth('LOGIN_FAILED', user.id, {
+        email: user.email,
+        reason: 'oauth_only_user',
+      });
       throw new AuthenticationError('Please sign in using your OAuth provider (Google)');
     }
 
     // Verify password
     const isValidPassword = await verifyPassword(validatedData.password, user.password);
     if (!isValidPassword) {
+      logAuth('LOGIN_FAILED', user.id, {
+        email: user.email,
+        reason: 'invalid_password',
+      });
       throw new AuthenticationError('Invalid email or password');
     }
 
     // Check user status
     if (user.status === UserStatus.SUSPENDED) {
+      logAuth('LOGIN_FAILED', user.id, {
+        email: user.email,
+        reason: 'account_suspended',
+      });
       throw new AuthenticationError('Your account has been suspended. Please contact support.');
     }
 
     if (user.status === UserStatus.INACTIVE) {
+      logAuth('LOGIN_FAILED', user.id, {
+        email: user.email,
+        reason: 'account_inactive',
+      });
       throw new AuthenticationError('Your account is inactive. Please contact support.');
     }
 
     if (user.status === UserStatus.PENDING_VERIFICATION) {
+      logAuth('LOGIN_FAILED', user.id, {
+        email: user.email,
+        reason: 'email_not_verified',
+      });
       throw new AuthenticationError('Please verify your email address before signing in.');
     }
 
@@ -95,6 +119,13 @@ const rawLoginAction = async (data: LoginInput) => {
     await prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
+    });
+
+    // Log successful login
+    logAuth('LOGIN_SUCCESS', user.id, {
+      email: user.email,
+      role: user.role,
+      loginMethod: 'credentials',
     });
 
     // Return user data (excluding password)
@@ -137,6 +168,10 @@ const rawRegisterAction = async (data: RegisterInput) => {
     });
     
     if (existingUser) {
+      logAuth('REGISTER_FAILED', undefined, {
+        email: validatedData.email,
+        reason: 'email_already_exists',
+      });
       throw new ConflictError('A user with this email address already exists');
     }
     
@@ -176,6 +211,21 @@ const rawRegisterAction = async (data: RegisterInput) => {
     // TODO: Send verification email
     console.log(`Email verification token for ${user.email}: ${verificationToken}`);
     console.log('TODO: Implement email sending service');
+    
+    // Log successful registration
+    logAuth('REGISTER_SUCCESS', user.id, {
+      email: user.email,
+      role: user.role,
+      registrationMethod: 'credentials',
+    });
+    
+    // Log business event
+    logBusiness('USER_REGISTERED', 'user', user.id, {
+      email: user.email,
+      role: user.role,
+      registrationMethod: 'email',
+      requiresVerification: true,
+    });
     
     return {
       user: {

@@ -7,6 +7,7 @@ import {
   ERROR_CODES,
   HTTP_STATUS 
 } from './response';
+import { logError, logServerAction, logApiRequest } from './log';
 
 // Type for Server Actions
 type ServerAction<T extends any[], R> = (...args: T) => Promise<R>;
@@ -24,24 +25,43 @@ export function withServerActionErrorHandling<T extends any[], R>(
   }
 ): ServerActionWithErrorHandling<T, R> {
   return async (...args: T): Promise<ApiResponse<R>> => {
+    const startTime = Date.now();
+    let success = false;
+    
     try {
       const result = await action(...args);
+      success = true;
+      
+      // Log successful execution
+      const duration = Date.now() - startTime;
+      logServerAction(action.name || 'anonymous', true, duration, undefined, {
+        argsCount: args.length,
+      });
+      
       return {
         success: true,
         data: result,
       };
     } catch (error) {
       const errorInfo = handleError(error);
+      const duration = Date.now() - startTime;
       
-      // Log error if enabled
+      // Log error with Winston
       if (options?.logErrors !== false) {
-        console.error(`Server Action Error [${errorInfo.code}]:`, {
-          message: errorInfo.message,
+        logError(error instanceof Error ? error : new Error(String(error)), {
+          action: action.name || 'anonymous',
+          code: errorInfo.code,
           details: errorInfo.details,
-          action: action.name,
           args: process.env.NODE_ENV === 'development' ? args : '[HIDDEN]',
+          duration: `${duration}ms`,
         });
       }
+
+      // Log server action execution
+      logServerAction(action.name || 'anonymous', false, duration, undefined, {
+        errorCode: errorInfo.code,
+        argsCount: args.length,
+      });
 
       // Handle authentication errors with redirect
       if (errorInfo.code === ERROR_CODES.UNAUTHORIZED && options?.redirectOnError) {
@@ -62,8 +82,25 @@ export function withApiErrorHandling(
   }
 ): ApiHandler {
   return async (request: Request, context?: any): Promise<Response> => {
+    const startTime = Date.now();
+    let statusCode = 200;
+    
     try {
       const response = await handler(request, context);
+      statusCode = response.status;
+      
+      // Log successful API request
+      const duration = Date.now() - startTime;
+      logApiRequest(
+        request.method,
+        request.url,
+        statusCode,
+        duration,
+        undefined, // userId would need to be extracted from request
+        {
+          userAgent: request.headers.get('user-agent'),
+        }
+      );
       
       // Add CORS headers if enabled
       if (options?.enableCors) {
@@ -75,17 +112,33 @@ export function withApiErrorHandling(
       return response;
     } catch (error) {
       const errorInfo = handleError(error);
+      statusCode = errorInfo.statusCode;
+      const duration = Date.now() - startTime;
       
-      // Log error if enabled
+      // Log error with Winston
       if (options?.logErrors !== false) {
-        console.error(`API Route Error [${errorInfo.code}]:`, {
-          message: errorInfo.message,
-          details: errorInfo.details,
+        logError(error instanceof Error ? error : new Error(String(error)), {
           method: request.method,
           url: request.url,
           userAgent: request.headers.get('user-agent'),
+          code: errorInfo.code,
+          details: errorInfo.details,
+          duration: `${duration}ms`,
         });
       }
+
+      // Log API request with error
+      logApiRequest(
+        request.method,
+        request.url,
+        statusCode,
+        duration,
+        undefined, // userId would need to be extracted from request
+        {
+          userAgent: request.headers.get('user-agent'),
+          errorCode: errorInfo.code,
+        }
+      );
 
       const response = apiError(
         errorInfo.code,
