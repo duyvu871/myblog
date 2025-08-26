@@ -148,12 +148,14 @@ NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 NEXT_PUBLIC_APP_NAME="Student Management System"
 NEXT_PUBLIC_APP_VERSION="1.0.0"
+NEXT_PUBLIC_LOG_LEVEL="info"
 ```
 
 - **NEXT_PUBLIC_BASE_URL**: Public base URL
 - **NEXT_PUBLIC_API_URL**: Public API URL
 - **NEXT_PUBLIC_APP_NAME**: Application display name
 - **NEXT_PUBLIC_APP_VERSION**: Public version number
+- **NEXT_PUBLIC_LOG_LEVEL**: Client-side log level (`error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`)
 
 ## 🔒 Security Best Practices
 

@@ -269,52 +269,180 @@ export type CreateStudentInput = z.infer<typeof CreateStudentSchema>
 
 ## F. Auth & RBAC
 
-### 1) Auth.js route and helpers
+### 1) NextAuth.js implementation
+
+The authentication system is now fully implemented with NextAuth.js, providing both server-side and client-side authentication capabilities.
 
 ```ts
-// app/auth/[...nextauth]/route.ts
+// app/api/auth/[...nextauth]/route.ts
+import { NextAuthHandler } from "app/lib/auth";
+
+export { NextAuthHandler as GET, NextAuthHandler as POST };
+```
+
+```ts
+// lib/auth.ts - Server-side authentication configuration
 import NextAuth from 'next-auth'
-import Credentials from 'next-auth/providers/credentials'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import { prisma } from '@/lib/db'
-import { z } from 'zod'
+import { compare } from 'bcryptjs'
 
-const CredentialsSchema = z.object({ email: z.string().email(), password: z.string().min(6) })
-
-export const { handlers, auth } = NextAuth({
+export const authOptions = {
   providers: [
-    Credentials({
-      authorize: async (credentials) => {
-        const parsed = CredentialsSchema.safeParse(credentials)
-        if (!parsed.success) return null
-        const user = await prisma.user.findUnique({ where: { email: parsed.data.email } })
-        // TODO: verify password
-        return user ?? null
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
       },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
+        
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        })
+        
+        if (!user || !await compare(credentials.password, user.password)) {
+          return null
+        }
+        
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          status: user.status,
+          emailVerified: user.emailVerified,
+        }
+      }
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    })
   ],
   session: { strategy: 'jwt' },
-})
+  callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.role = user.role
+        token.status = user.status
+        token.emailVerified = user.emailVerified
+      }
+      return token
+    },
+    session: async ({ session, token }) => {
+      session.user.id = token.sub
+      session.user.role = token.role
+      session.user.status = token.status
+      session.user.emailVerified = token.emailVerified
+      return session
+    }
+  }
+}
 
-export { handlers as GET, handlers as POST }
+export const NextAuthHandler = NextAuth(authOptions)
 ```
+
+### 2) Server-side authentication helpers
 
 ```ts
-// lib/auth.ts
-import { auth } from '@/app/auth/[...nextauth]/route'
-import { Role } from '@prisma/client'
+// lib/auth-helpers.ts - Server-side authentication utilities
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "app/lib/auth";
+import { redirect } from "next/navigation";
+import { Role, UserStatus } from "db/enums";
 
-export async function requireUser() {
-  const session = await auth()
-  if (!session?.user) throw new Error('Unauthorized')
-  return session.user
+// Get current session
+export async function getCurrentSession() {
+  return await getServerSession(authOptions);
 }
 
-export function hasRole(user: { role?: Role }, roles: Role[]) {
-  return !!user.role && roles.includes(user.role)
+// Get current user
+export async function getCurrentUser() {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+// Require authentication
+export async function requireAuth(redirectTo?: string) {
+  const session = await getCurrentSession();
+  if (!session?.user) {
+    redirect(redirectTo || '/auth/login');
+  }
+  return session.user;
+}
+
+// Require specific role
+export async function requireRole(roles: string | string[], redirectTo?: string) {
+  const user = await requireAuth();
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  
+  if (!allowedRoles.includes(user.role)) {
+    redirect(redirectTo || '/unauthorized');
+  }
+  return user;
+}
+
+// Check user permissions
+export function getUserPermissions(role: string) {
+  const permissions = {
+    ADMIN: ['user.create', 'user.read', 'user.update', 'user.delete', 'admin.access'],
+    USER: ['profile.read', 'profile.update'],
+  };
+  return permissions[role as keyof typeof permissions] || permissions.USER;
 }
 ```
 
-### 2) Central RBAC policies
+### 3) Client-side authentication hook
+
+```ts
+// hooks/use-auth.ts - Client-side authentication utilities
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Role, UserStatus } from 'db/enums';
+
+export function useAuth() {
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
+  
+  const user = session?.user ?? null;
+  const isAuthenticated = !!user;
+  
+  // Authentication methods
+  const signInWithCredentials = async (email: string, password: string) => {
+    const result = await signIn('credentials', {
+      email, password, redirect: false
+    });
+    return result?.error ? { success: false, error: result.error } : { success: true };
+  };
+  
+  const signInWithProvider = async (provider: string) => {
+    const result = await signIn(provider, { redirect: false });
+    return result?.error ? { success: false, error: result.error } : { success: true };
+  };
+  
+  // Permission checks
+  const hasRole = (roles: string | string[]) => {
+    if (!user) return false;
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    return allowedRoles.includes(user.role);
+  };
+  
+  const isAdmin = () => hasRole(Role.ADMIN);
+  const isActive = () => user?.status === UserStatus.ACTIVE;
+  
+  return {
+    user, session, isAuthenticated,
+    signInWithCredentials, signInWithProvider, signOut,
+    hasRole, isAdmin, isActive,
+    // ... other methods
+  };
+}
+```
+
+### 4) Central RBAC policies
 
 ```ts
 // lib/rbac.ts
@@ -324,6 +452,12 @@ export const Policies = {
   viewStudent: (role: Role) => [Role.ADMIN, Role.TEACHER, Role.PARENT].includes(role),
   editStudent: (role: Role) => [Role.ADMIN, Role.TEACHER].includes(role),
   manageBilling: (role: Role) => [Role.ADMIN].includes(role),
+}
+
+// Enhanced permission system integrated with auth helpers
+export function canAccessResource(userRole: string, resource: string, action: string): boolean {
+  const permissions = getUserPermissions(userRole);
+  return permissions.includes(`${resource}.${action}`);
 }
 ```
 

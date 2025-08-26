@@ -31,23 +31,29 @@ src/sections/auth/
 
 ### ✅ Implemented Features
 
+- **NextAuth.js Integration**: Complete authentication system with NextAuth.js
 - **User Registration**: Complete sign-up flow with validation
 - **User Login**: Secure authentication with credentials
+- **OAuth Integration**: Google Sign-In support (fully implemented)
+- **Session Management**: JWT-based session management with NextAuth.js
+- **Server-Side Authentication**: Comprehensive server-side auth helpers
+- **Client-Side Authentication**: Custom useAuth hook for client components
+- **Role-Based Access Control**: User roles and permissions system
 - **Form Validation**: Client and server-side validation using Zod
-- **OAuth Integration**: Google Sign-In support (UI ready)
 - **Responsive Design**: Mobile-first responsive layout
-- **Error Handling**: Comprehensive error management
+- **Error Handling**: Comprehensive error management with logging
 - **TypeScript Support**: Fully typed with IntelliSense
 - **Loading States**: User feedback during async operations
+- **Security Features**: CSRF protection, input validation, secure sessions
 
 ### 🚧 Planned Features
 
 - **Password Reset**: Forgot password functionality
 - **Email Verification**: Account verification via email
-- **Session Management**: JWT/session-based authentication
-- **Role-Based Access**: User roles and permissions
 - **Two-Factor Authentication**: Enhanced security
 - **Account Settings**: Profile management
+- **Social Login Providers**: Additional OAuth providers
+- **Advanced Security**: Rate limiting, account lockout
 
 ## 📋 Form Schemas & Validation
 
@@ -111,32 +117,162 @@ The system also includes schemas for:
 - **Change Password**: For authenticated users
 - **Profile Update**: User profile management
 
-## 🔧 Server Actions
+## 🔧 NextAuth.js Implementation
 
-### Login Action
+### Authentication Configuration
+
+The system now uses NextAuth.js for complete authentication management:
 
 ```typescript
-const rawLoginAction = async (data: LoginInput) => {
-  // Validate input data
-  const validatedData = LoginSchema.parse(data);
-  
-  // TODO: Implement actual authentication
-  // Currently uses mock authentication for development
-  if (validatedData.email === 'admin@example.com' && validatedData.password === 'password') {
-    return {
-      user: {
-        id: '1',
-        email: validatedData.email,
-        name: 'Admin User',
-        role: 'ADMIN',
-      },
-    };
-  }
-  
-  throw new AuthenticationError('Invalid email or password');
-};
+// src/lib/auth.ts
+import NextAuth from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
+import { prisma } from './db'
+import { compare } from 'bcryptjs'
 
-export const loginAction = withServerActionErrorHandling(rawLoginAction);
+export const authOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null
+        
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        })
+        
+        if (!user || !await compare(credentials.password, user.password)) {
+          return null
+        }
+        
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          status: user.status,
+          emailVerified: user.emailVerified,
+        }
+      }
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    })
+  ],
+  session: { strategy: 'jwt' },
+  callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.role = user.role
+        token.status = user.status
+        token.emailVerified = user.emailVerified
+      }
+      return token
+    },
+    session: async ({ session, token }) => {
+      session.user.id = token.sub
+      session.user.role = token.role
+      session.user.status = token.status
+      session.user.emailVerified = token.emailVerified
+      return session
+    }
+  }
+}
+
+export const NextAuthHandler = NextAuth(authOptions)
+```
+
+### Server-Side Authentication Helpers
+
+Complete set of server-side authentication utilities:
+
+```typescript
+// src/lib/auth-helpers.ts
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth";
+import { redirect } from "next/navigation";
+import { Role, UserStatus } from "db/enums";
+
+// Get current session
+export async function getCurrentSession() {
+  return await getServerSession(authOptions);
+}
+
+// Get current user
+export async function getCurrentUser() {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+// Require authentication - redirect if not authenticated
+export async function requireAuth(redirectTo?: string) {
+  const session = await getCurrentSession();
+  if (!session?.user) {
+    redirect(redirectTo || '/auth/login');
+  }
+  return session.user;
+}
+
+// Require specific role
+export async function requireRole(roles: string | string[], redirectTo?: string) {
+  const user = await requireAuth();
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  
+  if (!allowedRoles.includes(user.role)) {
+    redirect(redirectTo || '/unauthorized');
+  }
+  return user;
+}
+
+// Permission system
+export function getUserPermissions(role: string) {
+  const permissions = {
+    ADMIN: ['user.create', 'user.read', 'user.update', 'user.delete', 'admin.access'],
+    USER: ['profile.read', 'profile.update'],
+  };
+  return permissions[role as keyof typeof permissions] || permissions.USER;
+}
+
+// Check if user has specific permission
+export async function hasPermission(permission: string) {
+  const session = await getCurrentSession();
+  if (!session?.user) return false;
+  
+  const userPermissions = getUserPermissions(session.user.role);
+  return userPermissions.includes(permission);
+}
+```
+
+## 🔧 Server Actions
+
+### NextAuth Actions Integration
+
+Server actions now integrate with NextAuth.js for authentication:
+
+```typescript
+// Example server action with authentication
+'use server'
+
+import { requireAuth, requireRole } from '@/lib/auth-helpers'
+import { logAuth } from '@/utils/log'
+
+export async function createStudentAction(formData: FormData) {
+  // Require authentication and specific role
+  const user = await requireRole(['ADMIN', 'TEACHER']);
+  
+  logAuth('STUDENT_CREATION_ATTEMPT', user.id, {
+    email: user.email,
+    role: user.role,
+  });
+  
+  // Process the action...
+}
 ```
 
 ### Registration Action
@@ -181,6 +317,162 @@ All server actions use the `withServerActionErrorHandling` wrapper for consisten
 ```
 
 ## 🎨 UI Components
+
+## 🎣 Client-Side Authentication Hook
+
+### useAuth Hook
+
+Comprehensive client-side authentication utilities:
+
+```typescript
+// src/hooks/use-auth.ts
+'use client';
+
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState, useCallback } from 'react';
+import { Role, UserStatus } from 'db/enums';
+
+export function useAuth() {
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const user = session?.user ?? null;
+  const isAuthenticated = !!user;
+
+  // Sign in with credentials
+  const signInWithCredentials = useCallback(async (
+    email: string, 
+    password: string,
+    redirectTo?: string
+  ) => {
+    setIsLoading(true);
+    
+    try {
+      const result = await signIn('credentials', {
+        email, password, redirect: false,
+        callbackUrl: redirectTo || '/dashboard',
+      });
+
+      if (result?.error) {
+        return {
+          success: false,
+          error: result.error === 'CredentialsSignin' 
+            ? 'Invalid email or password' 
+            : 'Sign in failed',
+        };
+      }
+
+      if (result?.ok) {
+        router.push(redirectTo || '/dashboard');
+        return { success: true };
+      }
+
+      return { success: false, error: 'Sign in failed' };
+    } catch (error) {
+      return { success: false, error: 'An unexpected error occurred' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  // Permission checks
+  const hasRole = useCallback((roles: string | string[]) => {
+    if (!user) return false;
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    return allowedRoles.includes(user.role);
+  }, [user]);
+
+  const isAdmin = useCallback(() => hasRole(Role.ADMIN), [hasRole]);
+  const isActive = useCallback(() => user?.status === UserStatus.ACTIVE, [user]);
+
+  // Client-side route protection
+  const requireAuth = useCallback((redirectTo?: string) => {
+    if (!isAuthenticated && status !== 'loading') {
+      router.push(redirectTo || '/auth/login');
+      return false;
+    }
+    return true;
+  }, [isAuthenticated, status, router]);
+
+  return {
+    // User data
+    user, session, isAuthenticated,
+    isLoading: status === 'loading' || isLoading,
+
+    // Authentication methods
+    signInWithCredentials,
+    signInWithProvider: (provider: string) => signIn(provider),
+    signOut: () => signOut(),
+    updateSession: update,
+
+    // Permission checks
+    hasRole, isAdmin, isActive,
+    isEmailVerified: () => !!user?.emailVerified,
+    needsEmailVerification: () => user?.status === UserStatus.PENDING_VERIFICATION,
+
+    // Route protection
+    requireAuth,
+    requireRole: (roles: string | string[]) => requireAuth() && hasRole(roles),
+
+    // Navigation helpers
+    redirectToLogin: (callbackUrl?: string) => {
+      const loginUrl = callbackUrl 
+        ? `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : '/auth/login';
+      router.push(loginUrl);
+    },
+  };
+}
+
+// Convenience hooks
+export function useRequireAuth(redirectTo?: string) {
+  const { requireAuth } = useAuth();
+  return requireAuth(redirectTo);
+}
+
+export function useIsAdmin() {
+  const { isAdmin } = useAuth();
+  return isAdmin();
+}
+```
+
+### Hook Usage Examples
+
+```typescript
+// In a component that needs authentication
+function ProtectedComponent() {
+  const { user, isAuthenticated, requireAuth, hasRole } = useAuth();
+
+  useEffect(() => {
+    requireAuth('/auth/login');
+  }, [requireAuth]);
+
+  if (!isAuthenticated) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>Welcome, {user.name}!</h1>
+      {hasRole('ADMIN') && <AdminPanel />}
+    </div>
+  );
+}
+
+// Login form integration
+function LoginForm() {
+  const { signInWithCredentials, isLoading } = useAuth();
+  
+  const handleSubmit = async (data) => {
+    const result = await signInWithCredentials(data.email, data.password);
+    if (!result.success) {
+      setError(result.error);
+    }
+  };
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
 
 ### AuthLayout Component
 
@@ -526,17 +818,32 @@ For user session management, the system will integrate with:
 ### Environment Variables
 
 ```bash
-# Authentication (planned)
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
+# NextAuth.js Configuration
+NEXTAUTH_URL="http://localhost:3000"
+AUTH_URL="http://localhost:3000/api/auth"
+NEXTAUTH_SECRET="your-super-secret-key-change-this-in-production"
+JWT_SECRET="your-jwt-secret-key-change-this-in-production"
 
-# OAuth providers
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# OAuth Providers
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/student_management
+DATABASE_URL="postgresql://user:password@localhost:5432/student_management"
+
+# Logging (Client-side accessible)
+NEXT_PUBLIC_LOG_LEVEL="info"
 ```
+
+**Required Variables:**
+- **NEXTAUTH_SECRET**: Secret for NextAuth (minimum 32 characters)
+- **JWT_SECRET**: Secret for JWT tokens (minimum 32 characters)
+- **DATABASE_URL**: PostgreSQL connection string
+- **NEXTAUTH_URL**: Base URL for authentication callbacks
+
+**Optional Variables:**
+- **GOOGLE_CLIENT_ID/SECRET**: For Google OAuth integration
+- **NEXT_PUBLIC_LOG_LEVEL**: Client-side logging level
 
 ### Database Schema (Planned)
 
@@ -612,19 +919,25 @@ enum Role {
 
 ## 🚧 Roadmap
 
-### Phase 1 (Current)
+### Phase 1 (Completed) ✅
 - [x] Basic login/register UI
 - [x] Form validation
-- [x] Mock authentication
-- [x] Error handling
+- [x] NextAuth.js integration
+- [x] Real authentication with credentials
+- [x] OAuth Google integration
+- [x] Server-side authentication helpers
+- [x] Client-side authentication hook
+- [x] Role-based access control
+- [x] Session management
+- [x] Error handling with logging
 - [x] Responsive design
 
 ### Phase 2 (Next)
-- [ ] Database integration
-- [ ] Real authentication with NextAuth.js
-- [ ] Email verification
+- [ ] Database integration with Prisma
+- [ ] Email verification system
 - [ ] Password reset functionality
-- [ ] OAuth Google integration
+- [ ] User profile management
+- [ ] Advanced security features
 
 ### Phase 3 (Future)
 - [ ] Role-based access control
