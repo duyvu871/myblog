@@ -5,12 +5,14 @@ import 'app/styles/globals.css';
 import MantineProvider from 'app/providers/mantine-provider';
 import ThemeProvider from 'app/providers/theme-provider';
 import { SessionProvider } from 'app/providers/session-provider';
+import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Next.js 15 Starter Template',
-  description: 'A modern Next.js 15 starter template with NextAuth.js, TypeScript, and Tailwind CSS',
+  description:
+    'A modern Next.js 15 starter template with NextAuth.js, TypeScript, and Tailwind CSS',
 };
 
 export default function RootLayout({
@@ -24,7 +26,7 @@ export default function RootLayout({
         <ThemeProvider>
           <MantineProvider>
             <SessionProvider>
-              {children}
+              <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
             </SessionProvider>
           </MantineProvider>
         </ThemeProvider>
