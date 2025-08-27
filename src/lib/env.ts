@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, ZodIssue } from 'zod';
 
 /**
  * Environment variable validation schema
@@ -31,10 +31,11 @@ const envSchema = z.object({
 
   // Email Configuration (Optional)
   SMTP_HOST: z.string().optional().or(z.literal('')),
-  SMTP_PORT: z.string().optional().or(z.literal('')).refine(
-    (val) => !val || /^\d+$/.test(val),
-    { message: 'SMTP_PORT must be a number or empty' }
-  ),
+  SMTP_PORT: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || /^\d+$/.test(val), { message: 'SMTP_PORT must be a number or empty' }),
   SMTP_USER: z.string().optional().or(z.literal('')),
   SMTP_PASS: z.string().optional().or(z.literal('')),
 
@@ -49,13 +50,20 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('./uploads'),
 
   // Rate Limiting
-  RATE_LIMIT_WINDOW: z.string().regex(/^\d+$/, 'RATE_LIMIT_WINDOW must be a number').default('900000'),
+  RATE_LIMIT_WINDOW: z
+    .string()
+    .regex(/^\d+$/, 'RATE_LIMIT_WINDOW must be a number')
+    .default('900000'),
   RATE_LIMIT_MAX: z.string().regex(/^\d+$/, 'RATE_LIMIT_MAX must be a number').default('100'),
 
   // Logging Configuration
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']).default('info'),
   LOG_FILE: z.string().default('./logs/app.log'),
-  LOG_TO_FILE: z.string().optional().transform(val => val === 'true').default(false),
+  LOG_TO_FILE: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true')
+    .default(false),
 
   // Public Environment Variables (Client-side)
   NEXT_PUBLIC_BASE_URL: z.string().url().optional(),
@@ -64,7 +72,9 @@ const envSchema = z.object({
   NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: z.string().optional(),
   NEXT_PUBLIC_APP_NAME: z.string().default('Next.js 15 Starter Template'),
   NEXT_PUBLIC_APP_VERSION: z.string().default('1.0.0'),
-  NEXT_PUBLIC_LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']).default('info'),
+  NEXT_PUBLIC_LOG_LEVEL: z
+    .enum(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'])
+    .default('info'),
 });
 
 /**
@@ -76,10 +86,12 @@ function validateEnv() {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues.map((err: any) => `${err.path.join('.')}: ${err.message}`);
+      const missingVars = error.issues.map(
+        (err: ZodIssue) => `${err.path.join('.')}: ${err.message}`
+      );
       throw new Error(
         `Environment validation failed:\n${missingVars.join('\n')}\n\n` +
-        'Please check your .env file and ensure all required variables are set.'
+          'Please check your .env file and ensure all required variables are set.'
       );
     }
     throw error;
@@ -153,10 +165,16 @@ export const emailConfig = {
   port: env.SMTP_PORT && env.SMTP_PORT !== '' ? parseInt(env.SMTP_PORT, 10) : undefined,
   user: env.SMTP_USER || undefined,
   password: env.SMTP_PASS || undefined,
-  enabled: !!(env.SMTP_HOST && env.SMTP_HOST !== '' && 
-             env.SMTP_PORT && env.SMTP_PORT !== '' && 
-             env.SMTP_USER && env.SMTP_USER !== '' && 
-             env.SMTP_PASS && env.SMTP_PASS !== ''),
+  enabled: !!(
+    env.SMTP_HOST &&
+    env.SMTP_HOST !== '' &&
+    env.SMTP_PORT &&
+    env.SMTP_PORT !== '' &&
+    env.SMTP_USER &&
+    env.SMTP_USER !== '' &&
+    env.SMTP_PASS &&
+    env.SMTP_PASS !== ''
+  ),
 } as const;
 
 /**
@@ -164,14 +182,31 @@ export const emailConfig = {
  */
 export const oauthConfig = {
   google: {
-    clientId: (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== '') ? env.GOOGLE_CLIENT_ID : 
-              (env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_ID !== '') ? env.AUTH_GOOGLE_ID : undefined,
-    clientSecret: (env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== '') ? env.GOOGLE_CLIENT_SECRET : 
-                  (env.AUTH_GOOGLE_SECRET && env.AUTH_GOOGLE_SECRET !== '') ? env.AUTH_GOOGLE_SECRET : undefined,
-    enabled: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== '' && 
-               env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== '') || 
-             !!(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_ID !== '' && 
-               env.AUTH_GOOGLE_SECRET && env.AUTH_GOOGLE_SECRET !== ''),
+    clientId:
+      env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== ''
+        ? env.GOOGLE_CLIENT_ID
+        : env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_ID !== ''
+          ? env.AUTH_GOOGLE_ID
+          : undefined,
+    clientSecret:
+      env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== ''
+        ? env.GOOGLE_CLIENT_SECRET
+        : env.AUTH_GOOGLE_SECRET && env.AUTH_GOOGLE_SECRET !== ''
+          ? env.AUTH_GOOGLE_SECRET
+          : undefined,
+    enabled:
+      !!(
+        env.GOOGLE_CLIENT_ID &&
+        env.GOOGLE_CLIENT_ID !== '' &&
+        env.GOOGLE_CLIENT_SECRET &&
+        env.GOOGLE_CLIENT_SECRET !== ''
+      ) ||
+      !!(
+        env.AUTH_GOOGLE_ID &&
+        env.AUTH_GOOGLE_ID !== '' &&
+        env.AUTH_GOOGLE_SECRET &&
+        env.AUTH_GOOGLE_SECRET !== ''
+      ),
   },
 } as const;
 
@@ -222,7 +257,7 @@ export const devUtils = {
    */
   logConfig: () => {
     if (!isDevelopment) return;
-    
+
     console.log('🔧 Environment Configuration:');
     console.log('- NODE_ENV:', env.NODE_ENV);
     console.log('- APP_VERSION:', env.APP_VERSION);
@@ -232,7 +267,10 @@ export const devUtils = {
     console.log('- EMAIL_ENABLED:', emailConfig.enabled);
     console.log('- GOOGLE_OAUTH_ENABLED:', oauthConfig.google.enabled);
     console.log('- MAX_FILE_SIZE:', uploadConfig.maxFileSizeMB + 'MB');
-    console.log('- RATE_LIMIT:', `${rateLimitConfig.maxRequests} requests per ${rateLimitConfig.windowMinutes} minutes`);
+    console.log(
+      '- RATE_LIMIT:',
+      `${rateLimitConfig.maxRequests} requests per ${rateLimitConfig.windowMinutes} minutes`
+    );
     console.log('- LOG_LEVEL:', env.LOG_LEVEL);
   },
 
@@ -243,7 +281,7 @@ export const devUtils = {
     if (!isDevelopment) return;
 
     const services = [];
-    
+
     // Check database connection
     try {
       // This would need to be implemented with actual database connection
@@ -261,7 +299,7 @@ export const devUtils = {
     }
 
     console.log('🔍 Service Status:');
-    services.forEach(service => console.log(service));
+    services.forEach((service) => console.log(service));
   },
 };
 

@@ -1,23 +1,23 @@
 import { z } from 'zod';
 
 // Common validation schemas
-export const phoneSchema = z.string()
-  .regex(/^[0-9]{10}$/, 'Số điện thoại phải có 10 chữ số');
+export const phoneSchema = z.string().regex(/^[0-9]{10}$/, 'Số điện thoại phải có 10 chữ số');
 
-export const emailSchema = z.string()
-  .email('Email không hợp lệ');
+export const emailSchema = z.string().email('Email không hợp lệ');
 
-export const currencySchema = z.number()
-  .min(0, 'Giá trị phải lớn hơn hoặc bằng 0');
+export const currencySchema = z.number().min(0, 'Giá trị phải lớn hơn hoặc bằng 0');
 
-export const requiredStringSchema = z.string()
-  .min(1, 'Trường này là bắt buộc');
+export const requiredStringSchema = z.string().min(1, 'Trường này là bắt buộc');
 
 export const optionalStringSchema = z.string().optional();
 
-export const passwordSchema = z.string()
+export const passwordSchema = z
+  .string()
   .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa và 1 số');
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa và 1 số'
+  );
 
 // Validation functions
 export function isValidEmail(email: string): boolean {
@@ -53,12 +53,10 @@ export function isValidJSON(str: string): boolean {
  * @returns Array of missing fields
  */
 export function validateRequiredFields(
-  obj: Record<string, any>,
+  obj: Record<string, unknown>,
   requiredFields: string[]
 ): string[] {
-  return requiredFields.filter(field => 
-    obj[field] === undefined || 
-    obj[field] === null || 
-    obj[field] === ''
+  return requiredFields.filter(
+    (field) => obj[field] === undefined || obj[field] === null || obj[field] === ''
   );
 }

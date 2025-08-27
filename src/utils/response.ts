@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Standard response types
-export interface SuccessResponse<T = any> {
+export interface SuccessResponse<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -12,11 +12,11 @@ export interface ErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
 }
 
-export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
+export type ApiResponse<T = unknown> = SuccessResponse<T> | ErrorResponse;
 
 // HTTP Status codes
 export const HTTP_STATUS = {
@@ -38,21 +38,21 @@ export const ERROR_CODES = {
   FORBIDDEN: 'FORBIDDEN',
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
-  
+
   // Validation
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   MISSING_REQUIRED_FIELDS: 'MISSING_REQUIRED_FIELDS',
   INVALID_INPUT: 'INVALID_INPUT',
-  
+
   // Resource
   NOT_FOUND: 'NOT_FOUND',
   ALREADY_EXISTS: 'ALREADY_EXISTS',
-  
+
   // Server
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   DATABASE_ERROR: 'DATABASE_ERROR',
   EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
-  
+
   // Rate limiting
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
 } as const;
@@ -61,9 +61,14 @@ export const ERROR_CODES = {
 export class AppError extends Error {
   public readonly code: string;
   public readonly statusCode: number;
-  public readonly details?: any;
+  public readonly details?: Record<string, unknown>;
 
-  constructor(code: string, message: string, statusCode: number, details?: any) {
+  constructor(
+    code: string,
+    message: string,
+    statusCode: number,
+    details?: Record<string, unknown>
+  ) {
     super(message);
     this.name = 'AppError';
     this.code = code;
@@ -73,7 +78,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super(ERROR_CODES.VALIDATION_ERROR, message, HTTP_STATUS.BAD_REQUEST, details);
     this.name = 'ValidationError';
   }
@@ -108,10 +113,7 @@ export class ConflictError extends AppError {
 }
 
 // Response builders
-export const createSuccessResponse = <T>(
-  data: T,
-  message?: string
-): SuccessResponse<T> => ({
+export const createSuccessResponse = <T>(data: T, message?: string): SuccessResponse<T> => ({
   success: true,
   data,
   message,
@@ -120,7 +122,7 @@ export const createSuccessResponse = <T>(
 export const createErrorResponse = (
   code: string,
   message: string,
-  details?: any
+  details?: Record<string, unknown>
 ): ErrorResponse => ({
   success: false,
   error: {
@@ -131,11 +133,7 @@ export const createErrorResponse = (
 });
 
 // API Response builders for Next.js
-export const apiSuccess = <T>(
-  data: T,
-  message?: string,
-  status: number = HTTP_STATUS.OK
-) => {
+export const apiSuccess = <T>(data: T, message?: string, status: number = HTTP_STATUS.OK) => {
   return NextResponse.json(createSuccessResponse(data, message), { status });
 };
 
@@ -143,7 +141,7 @@ export const apiError = (
   code: string,
   message: string,
   status: number = HTTP_STATUS.INTERNAL_SERVER_ERROR,
-  details?: any
+  details?: Record<string, unknown>
 ) => {
   return NextResponse.json(createErrorResponse(code, message, details), { status });
 };
@@ -153,12 +151,18 @@ export const actionSuccess = <T>(data: T, message?: string): SuccessResponse<T> 
   return createSuccessResponse(data, message);
 };
 
-export const actionError = (code: string, message: string, details?: any): ErrorResponse => {
+export const actionError = (
+  code: string,
+  message: string,
+  details?: Record<string, unknown>
+): ErrorResponse => {
   return createErrorResponse(code, message, details);
 };
 
 // Error handler utility
-export const handleError = (error: unknown): { code: string; message: string; statusCode: number; details?: any } => {
+export const handleError = (
+  error: unknown
+): { code: string; message: string; statusCode: number; details?: Record<string, unknown> } => {
   if (error instanceof AppError) {
     return {
       code: error.code,
@@ -175,7 +179,7 @@ export const handleError = (error: unknown): { code: string; message: string; st
         code: ERROR_CODES.DATABASE_ERROR,
         message: 'Database operation failed',
         statusCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? { message: error.message } : undefined,
       };
     }
 
@@ -184,7 +188,7 @@ export const handleError = (error: unknown): { code: string; message: string; st
         code: ERROR_CODES.VALIDATION_ERROR,
         message: 'Validation failed',
         statusCode: HTTP_STATUS.BAD_REQUEST,
-        details: error.message,
+        details: { message: error.message },
       };
     }
 
@@ -192,7 +196,7 @@ export const handleError = (error: unknown): { code: string; message: string; st
       code: ERROR_CODES.INTERNAL_ERROR,
       message: error.message || 'Internal server error',
       statusCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      details: process.env.NODE_ENV === 'development' ? { stack: error.stack } : undefined,
     };
   }
 

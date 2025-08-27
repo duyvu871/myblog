@@ -1,5 +1,6 @@
 import winston from 'winston';
 import path from 'path';
+import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 
 // Define log levels
 const logLevels = {
@@ -44,17 +45,17 @@ const developmentFormat = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(({ timestamp, level, message, stack, ...meta }) => {
     let log = `${timestamp} [${level}]: ${message}`;
-    
+
     // Add stack trace for errors
     if (stack) {
       log += `\n${stack}`;
     }
-    
+
     // Add metadata if present
     if (Object.keys(meta).length > 0) {
       log += `\n${JSON.stringify(meta, null, 2)}`;
     }
-    
+
     return log;
   })
 );
@@ -140,7 +141,7 @@ if (process.env.NODE_ENV === 'production') {
 /**
  * Log an error with stack trace and context
  */
-export const logError = (error: Error | string, context?: Record<string, any>) => {
+export const logError = (error: Error | string, context?: Record<string, unknown>) => {
   if (error instanceof Error) {
     logger.error(error.message, {
       stack: error.stack,
@@ -155,35 +156,35 @@ export const logError = (error: Error | string, context?: Record<string, any>) =
 /**
  * Log a warning message
  */
-export const logWarning = (message: string, context?: Record<string, any>) => {
+export const logWarning = (message: string, context?: Record<string, unknown>) => {
   logger.warn(message, context);
 };
 
 /**
  * Log an info message
  */
-export const logInfo = (message: string, context?: Record<string, any>) => {
+export const logInfo = (message: string, context?: Record<string, unknown>) => {
   logger.info(message, context);
 };
 
 /**
  * Log HTTP request/response
  */
-export const logHttp = (message: string, context?: Record<string, any>) => {
+export const logHttp = (message: string, context?: Record<string, unknown>) => {
   logger.http(message, context);
 };
 
 /**
  * Log debug information (development only)
  */
-export const logDebug = (message: string, context?: Record<string, any>) => {
+export const logDebug = (message: string, context?: Record<string, unknown>) => {
   logger.debug(message, context);
 };
 
 /**
  * Log authentication events
  */
-export const logAuth = (event: string, userId?: string, context?: Record<string, any>) => {
+export const logAuth = (event: string, userId?: string, context?: Record<string, unknown>) => {
   logger.info(`AUTH: ${event}`, {
     userId,
     type: 'authentication',
@@ -194,7 +195,11 @@ export const logAuth = (event: string, userId?: string, context?: Record<string,
 /**
  * Log database operations
  */
-export const logDatabase = (operation: string, table?: string, context?: Record<string, any>) => {
+export const logDatabase = (
+  operation: string,
+  table?: string,
+  context?: Record<string, unknown>
+) => {
   logger.debug(`DB: ${operation}`, {
     table,
     type: 'database',
@@ -211,10 +216,10 @@ export const logApiRequest = (
   statusCode: number,
   responseTime: number,
   userId?: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ) => {
   const level = statusCode >= 400 ? 'warn' : 'http';
-  
+
   logger.log(level, `${method} ${url} ${statusCode}`, {
     method,
     url,
@@ -234,11 +239,11 @@ export const logServerAction = (
   success: boolean,
   duration: number,
   userId?: string,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ) => {
   const level = success ? 'info' : 'warn';
   const status = success ? 'SUCCESS' : 'FAILED';
-  
+
   logger.log(level, `SERVER_ACTION: ${actionName} - ${status}`, {
     actionName,
     success,
@@ -252,9 +257,13 @@ export const logServerAction = (
 /**
  * Log security events
  */
-export const logSecurity = (event: string, severity: 'low' | 'medium' | 'high', context?: Record<string, any>) => {
+export const logSecurity = (
+  event: string,
+  severity: 'low' | 'medium' | 'high',
+  context?: Record<string, unknown>
+) => {
   const level = severity === 'high' ? 'error' : severity === 'medium' ? 'warn' : 'info';
-  
+
   logger.log(level, `SECURITY: ${event}`, {
     severity,
     type: 'security',
@@ -266,7 +275,12 @@ export const logSecurity = (event: string, severity: 'low' | 'medium' | 'high', 
 /**
  * Log performance metrics
  */
-export const logPerformance = (metric: string, value: number, unit: string, context?: Record<string, any>) => {
+export const logPerformance = (
+  metric: string,
+  value: number,
+  unit: string,
+  context?: Record<string, unknown>
+) => {
   logger.info(`PERFORMANCE: ${metric}`, {
     metric,
     value,
@@ -279,7 +293,12 @@ export const logPerformance = (metric: string, value: number, unit: string, cont
 /**
  * Log business events
  */
-export const logBusiness = (event: string, entityType?: string, entityId?: string, context?: Record<string, any>) => {
+export const logBusiness = (
+  event: string,
+  entityType?: string,
+  entityId?: string,
+  context?: Record<string, unknown>
+) => {
   logger.info(`BUSINESS: ${event}`, {
     event,
     entityType,
@@ -287,62 +306,6 @@ export const logBusiness = (event: string, entityType?: string, entityId?: strin
     type: 'business',
     ...context,
   });
-};
-
-// ============================================================================
-// MIDDLEWARE HELPERS
-// ============================================================================
-
-/**
- * Create a request logger middleware
- */
-export const createRequestLogger = () => {
-  return (req: any, res: any, next: any) => {
-    const start = Date.now();
-    
-    // Log request
-    logHttp(`Incoming ${req.method} ${req.url}`, {
-      method: req.method,
-      url: req.url,
-      userAgent: req.get('user-agent'),
-      ip: req.ip,
-    });
-    
-    // Log response when finished
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      logApiRequest(
-        req.method,
-        req.url,
-        res.statusCode,
-        duration,
-        req.user?.id,
-        {
-          userAgent: req.get('user-agent'),
-          ip: req.ip,
-        }
-      );
-    });
-    
-    next();
-  };
-};
-
-/**
- * Create an error logger middleware
- */
-export const createErrorLogger = () => {
-  return (error: Error, req: any, res: any, next: any) => {
-    logError(error, {
-      method: req.method,
-      url: req.url,
-      userAgent: req.get('user-agent'),
-      ip: req.ip,
-      userId: req.user?.id,
-    });
-    
-    next(error);
-  };
 };
 
 // ============================================================================
@@ -354,9 +317,9 @@ export const createErrorLogger = () => {
  */
 export const createTimer = (label: string) => {
   const start = Date.now();
-  
+
   return {
-    end: (context?: Record<string, any>) => {
+    end: (context?: Record<string, unknown>) => {
       const duration = Date.now() - start;
       logPerformance(label, duration, 'ms', context);
       return duration;
@@ -367,18 +330,18 @@ export const createTimer = (label: string) => {
 /**
  * Log function execution (decorator pattern)
  */
-export const logExecution = <T extends (...args: any[]) => any>(
+export const logExecution = <T extends (...args: unknown[]) => unknown>(
   fn: T,
   functionName?: string
 ): T => {
   const name = functionName || fn.name || 'anonymous';
-  
+
   return ((...args: Parameters<T>) => {
     const timer = createTimer(`Function: ${name}`);
-    
+
     try {
       const result = fn(...args);
-      
+
       // Handle promises
       if (result instanceof Promise) {
         return result
@@ -391,14 +354,14 @@ export const logExecution = <T extends (...args: any[]) => any>(
             throw error;
           });
       }
-      
+
       // Handle synchronous functions
       timer.end({ success: true });
       return result;
     } catch (error) {
-      timer.end({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      timer.end({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
     }
@@ -413,18 +376,14 @@ export const logExecution = <T extends (...args: any[]) => any>(
 export default logger;
 
 // Export all utility functions
-export {
-  logger,
-  logLevels,
-  logColors,
-};
+export { logger, logLevels, logColors };
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export type LogLevel = keyof typeof logLevels;
-export type LogContext = Record<string, any>;
+export type LogContext = Record<string, unknown>;
 
 export interface LoggerConfig {
   level?: LogLevel;

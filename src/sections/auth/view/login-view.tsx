@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  Anchor,
-  Checkbox,
-  Divider,
-  Group,
-  Paper,
-  Stack,
-  Text,
-} from '@mantine/core';
+import { Anchor, Checkbox, Divider, Group, Paper, Stack, Text } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -41,10 +33,7 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
   };
 
   return (
-    <AuthLayout
-      title="Log in to your Account"
-      subtitle="Welcome back, please enter your details."
-    >
+    <AuthLayout title="Log in to your Account" subtitle="Welcome back, please enter your details.">
       {/* Google Sign In */}
       <OAuthButton provider="google" action="signin" />
 
@@ -105,13 +94,7 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
             </Anchor>
           </Group>
 
-          <FormButton
-            type="submit"
-            variant="primary"
-            fullWidth
-            loading={isLoading}
-            mt="md"
-          >
+          <FormButton type="submit" variant="primary" fullWidth loading={isLoading} mt="md">
             {isLoading ? 'Signing in...' : 'Log in'}
           </FormButton>
         </Stack>

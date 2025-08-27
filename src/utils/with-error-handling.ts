@@ -1,23 +1,29 @@
 import { redirect } from 'next/navigation';
-import { 
-  handleError, 
-  actionError, 
-  apiError, 
+import {
+  handleError,
+  actionError,
+  apiError,
   type ApiResponse,
   ERROR_CODES,
-  HTTP_STATUS 
+  HTTP_STATUS,
 } from './response';
 import { logError, logServerAction, logApiRequest } from './log';
+import { NextResponse } from 'next/server';
 
 // Type for Server Actions
-type ServerAction<T extends any[], R> = (...args: T) => Promise<R>;
-type ServerActionWithErrorHandling<T extends any[], R> = (...args: T) => Promise<ApiResponse<R>>;
+type ServerAction<T extends unknown[], R> = (...args: T) => Promise<R>;
+type ServerActionWithErrorHandling<T extends unknown[], R> = (
+  ...args: T
+) => Promise<ApiResponse<R>>;
 
 // Type for API Route handlers
-type ApiHandler<T = any> = (request: Request, context?: any) => Promise<Response>;
+type ApiHandler<T = unknown> = (
+  request: Request,
+  context?: Record<string, unknown>
+) => Promise<NextResponse>;
 
 // Server Action Error Handling HOC
-export function withServerActionErrorHandling<T extends any[], R>(
+export function withServerActionErrorHandling<T extends unknown[], R>(
   action: ServerAction<T, R>,
   options?: {
     redirectOnError?: string;
@@ -27,17 +33,17 @@ export function withServerActionErrorHandling<T extends any[], R>(
   return async (...args: T): Promise<ApiResponse<R>> => {
     const startTime = Date.now();
     let success = false;
-    
+
     try {
       const result = await action(...args);
       success = true;
-      
+
       // Log successful execution
       const duration = Date.now() - startTime;
       logServerAction(action.name || 'anonymous', true, duration, undefined, {
         argsCount: args.length,
       });
-      
+
       return {
         success: true,
         data: result,
@@ -45,7 +51,7 @@ export function withServerActionErrorHandling<T extends any[], R>(
     } catch (error) {
       const errorInfo = handleError(error);
       const duration = Date.now() - startTime;
-      
+
       // Log error with Winston
       if (options?.logErrors !== false) {
         logError(error instanceof Error ? error : new Error(String(error)), {
@@ -81,14 +87,14 @@ export function withApiErrorHandling(
     enableCors?: boolean;
   }
 ): ApiHandler {
-  return async (request: Request, context?: any): Promise<Response> => {
+  return async (request: Request, context?: Record<string, unknown>): Promise<NextResponse> => {
     const startTime = Date.now();
     let statusCode = 200;
-    
+
     try {
       const response = await handler(request, context);
       statusCode = response.status;
-      
+
       // Log successful API request
       const duration = Date.now() - startTime;
       logApiRequest(
@@ -101,20 +107,20 @@ export function withApiErrorHandling(
           userAgent: request.headers.get('user-agent'),
         }
       );
-      
+
       // Add CORS headers if enabled
       if (options?.enableCors) {
         response.headers.set('Access-Control-Allow-Origin', '*');
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       }
-      
+
       return response;
     } catch (error) {
       const errorInfo = handleError(error);
       statusCode = errorInfo.statusCode;
       const duration = Date.now() - startTime;
-      
+
       // Log error with Winston
       if (options?.logErrors !== false) {
         logError(error instanceof Error ? error : new Error(String(error)), {
@@ -162,7 +168,7 @@ export function withApiErrorHandling(
 // Specialized HOCs for different scenarios
 
 // Auth-required Server Action
-export function withAuthServerAction<T extends any[], R>(
+export function withAuthServerAction<T extends unknown[], R>(
   action: ServerAction<T, R>,
   options?: {
     redirectTo?: string;
@@ -191,7 +197,7 @@ export function withRateLimitedApi(
 }
 
 // Validation-enabled Server Action
-export function withValidatedServerAction<T extends any[], R>(
+export function withValidatedServerAction<T extends unknown[], R>(
   action: ServerAction<T, R>,
   validator?: (args: T) => void | Promise<void>
 ) {
@@ -212,7 +218,7 @@ export function withCorsApi(handler: ApiHandler) {
 }
 
 // Development-only enhanced logging
-export function withDevLogging<T extends any[], R>(
+export function withDevLogging<T extends unknown[], R>(
   action: ServerAction<T, R>
 ): ServerAction<T, R> {
   if (process.env.NODE_ENV !== 'development') {
@@ -229,21 +235,21 @@ export function withDevLogging<T extends any[], R>(
     try {
       const result = await action(...args);
       const duration = Date.now() - startTime;
-      
+
       console.log(`✅ Action completed: ${action.name}`, {
         duration: `${duration}ms`,
         resultType: typeof result,
       });
-      
+
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       console.error(`❌ Action failed: ${action.name}`, {
         duration: `${duration}ms`,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       throw error;
     }
   };
