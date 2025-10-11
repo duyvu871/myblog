@@ -1,0 +1,17 @@
+/* Table of Contents Custom Scrollbar Styles */
+.scrollArea::-webkit-scrollbar {
+  width: 2px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+  background: var(--catppuccin-surface2);
+  border-radius: 2px;
+}
+
+.scrollArea::-webkit-scrollbar-thumb:hover {
+  background: var(--catppuccin-surface1);
+}

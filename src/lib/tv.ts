@@ -1,7 +1,7 @@
 import { createTV } from 'tailwind-variants';
 
 const tv = createTV({
-	twMerge: true,
+  twMerge: true,
 });
 
 export { tv };

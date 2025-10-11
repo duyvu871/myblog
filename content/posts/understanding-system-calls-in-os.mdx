@@ -1,0 +1,262 @@
+---
+title: "Understanding System Calls in Operating Systems"
+description: "A comprehensive guide to system calls, how they work, and their importance in operating systems"
+date: "2025-01-15"
+author: "Bui An Du"
+tags: ["operating-systems", "system-calls", "kernel", "programming"]
+published: true
+thumbnail: "/images/system-calls-thumbnail.jpg"
+---
+
+# Understanding System Calls in Operating Systems
+
+System calls are one of the most fundamental concepts in operating systems, serving as the bridge between user-space applications and the kernel. In this post, we'll explore what system calls are, how they work, and why they're essential for modern computing.
+
+## What are System Calls?
+
+A **system call** is a mechanism that allows user-space programs to request services from the operating system kernel. Think of it as a controlled interface that enables applications to perform operations that require privileged access to system resources.
+
+### Key Characteristics
+
+- **Controlled Access**: System calls provide a secure way to access kernel services
+- **Mode Switching**: They facilitate transitions between user mode and kernel mode
+- **Standardized Interface**: They offer a consistent API for system resources
+
+## Types of System Calls
+
+System calls can be categorized into several types based on their functionality:
+
+### 1. Process Control
+These system calls manage process creation, termination, and control:
+
+```c
+// Process creation
+pid_t fork(void);
+int execve(const char *pathname, char *const argv[], char *const envp[]);
+
+// Process termination
+void exit(int status);
+int wait(int *status);
+
+// Example: Creating a new process
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    pid_t pid = fork();
+    
+    if (pid == 0) {
+        // Child process
+        printf("Hello from child process!\n");
+        exit(0);
+    } else if (pid > 0) {
+        // Parent process
+        int status;
+        wait(&status);
+        printf("Child process completed\n");
+    }
+    
+    return 0;
+}
+```
+
+### 2. File Management
+File-related operations are among the most common system calls:
+
+```c
+// File operations
+int open(const char *pathname, int flags, mode_t mode);
+ssize_t read(int fd, void *buf, size_t count);
+ssize_t write(int fd, const void *buf, size_t count);
+int close(int fd);
+
+// Example: Reading from a file
+#include <fcntl.h>
+#include <unistd.h>
+
+int main() {
+    int fd = open("example.txt", O_RDONLY);
+    if (fd != -1) {
+        char buffer[1024];
+        ssize_t bytes_read = read(fd, buffer, sizeof(buffer));
+        
+        if (bytes_read > 0) {
+            write(STDOUT_FILENO, buffer, bytes_read);
+        }
+        
+        close(fd);
+    }
+    
+    return 0;
+}
+```
+
+### 3. Device Management
+System calls for interacting with hardware devices:
+
+```c
+// Device control
+int ioctl(int fd, unsigned long request, ...);
+
+// Memory mapping
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+int munmap(void *addr, size_t length);
+```
+
+### 4. Information Maintenance
+System calls for retrieving and setting system information:
+
+```c
+// Time and date
+time_t time(time_t *tloc);
+int gettimeofday(struct timeval *tv, struct timezone *tz);
+
+// Process information
+pid_t getpid(void);
+uid_t getuid(void);
+```
+
+## How System Calls Work
+
+The execution of a system call involves several steps:
+
+### 1. System Call Invocation
+When a program makes a system call, it typically uses a wrapper function from the C library:
+
+```c
+// Application code
+int fd = open("file.txt", O_RDONLY);
+```
+
+### 2. Mode Transition
+The processor switches from user mode to kernel mode using a software interrupt or trap instruction.
+
+### 3. Kernel Execution
+The kernel identifies the system call and executes the corresponding kernel function.
+
+### 4. Return to User Mode
+After execution, the kernel returns control to the user program with the result.
+
+## System Call Interface
+
+### Linux System Call Numbers
+In Linux, each system call has a unique number:
+
+```c
+// System call numbers (x86_64)
+#define __NR_read    0
+#define __NR_write   1
+#define __NR_open    2
+#define __NR_close   3
+#define __NR_fork    57
+#define __NR_execve  59
+```
+
+### Assembly Level System Calls
+You can make system calls directly using assembly:
+
+```assembly
+section .data
+    msg db 'Hello, World!', 0xA
+    msg_len equ $ - msg
+
+section .text
+    global _start
+
+_start:
+    ; write system call
+    mov rax, 1          ; sys_write
+    mov rdi, 1          ; stdout
+    mov rsi, msg        ; message
+    mov rdx, msg_len    ; message length
+    syscall             ; invoke system call
+    
+    ; exit system call
+    mov rax, 60         ; sys_exit
+    mov rdi, 0          ; exit status
+    syscall
+```
+
+## Error Handling
+
+System calls can fail, and it's important to handle errors properly:
+
+```c
+#include <errno.h>
+#include <string.h>
+
+int fd = open("nonexistent.txt", O_RDONLY);
+if (fd == -1) {
+    fprintf(stderr, "Error opening file: %s\n", strerror(errno));
+    return 1;
+}
+```
+
+## Performance Considerations
+
+System calls have overhead due to:
+- **Mode switching**: Transition between user and kernel mode
+- **Context saving**: Saving and restoring processor state
+- **Parameter validation**: Kernel must validate all parameters
+
+### Optimizing System Call Usage
+
+```c
+// Bad: Multiple write calls
+for (int i = 0; i < 1000; i++) {
+    write(fd, &data[i], sizeof(int));
+}
+
+// Good: Single write call
+write(fd, data, 1000 * sizeof(int));
+```
+
+## Common System Calls in Practice
+
+Here are some frequently used system calls:
+
+| System Call | Purpose | Example |
+|-------------|---------|---------|
+| `open()` | Open a file | `open("file.txt", O_RDWR)` |
+| `read()` | Read data | `read(fd, buffer, size)` |
+| `write()` | Write data | `write(fd, data, size)` |
+| `close()` | Close file | `close(fd)` |
+| `fork()` | Create process | `pid = fork()` |
+| `exec()` | Execute program | `execve(path, argv, envp)` |
+| `malloc()` | Allocate memory | Uses `brk()` or `mmap()` |
+
+## Debugging System Calls
+
+### Using strace
+The `strace` tool allows you to trace system calls:
+
+```bash
+# Trace system calls of a program
+strace ./my_program
+
+# Trace specific system calls
+strace -e trace=open,read,write ./my_program
+
+# Count system calls
+strace -c ./my_program
+```
+
+## Conclusion
+
+System calls are the fundamental interface between applications and the operating system kernel. Understanding how they work is crucial for:
+
+- **System Programming**: Writing efficient system-level code
+- **Performance Optimization**: Minimizing system call overhead
+- **Debugging**: Identifying system-level issues
+- **Security**: Understanding privilege boundaries
+
+As you continue your journey in systems programming, remember that every high-level operation eventually translates to system calls. Mastering this concept will make you a more effective systems programmer and help you write more efficient, secure code.
+
+## Next Steps
+
+- Explore specific system calls in your target operating system
+- Practice writing programs that use system calls directly
+- Learn about system call interception and monitoring
+- Study how different programming languages wrap system calls
+
+Happy coding! 🚀

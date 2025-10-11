@@ -1,0 +1,232 @@
+---
+title: "Welcome to My Blog - Advanced MDX Showcase"
+description: "Exploring the full power of MDX with Next.js, featuring advanced formatting, interactive components, and complex layouts"
+date: "2025-01-15"
+author: "Bui An Du"
+tags: ["nextjs", "mdx", "blog", "tutorial", "react", "typescript"]
+published: true
+---
+
+# 🚀 Welcome to My Advanced MDX Blog
+
+<div style={{ textAlign: 'center', margin: '2rem 0', padding: '1.5rem', backgroundColor: 'var(--catppuccin-surface0)', borderRadius: '12px', border: '1px solid var(--catppuccin-surface1)' }}>
+  <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--catppuccin-blue)' }}>🎉 Interactive Blog Experience</h2>
+  <span style={{ margin: '0', color: 'var(--catppuccin-text)' }}>
+    This post showcases the full power of **MDX** with **Next.js**, featuring advanced formatting, custom components, and interactive elements.
+  </span>
+</div>
+
+## ✨ What Makes MDX Special?
+
+MDX combines the simplicity of **Markdown** with the power of **React components**. Here's what you can do:
+
+### 🎨 Rich Text Formatting
+
+- **Bold text** and *italic text* work as expected
+- ~~Strikethrough~~ for corrections
+- `Inline code` with syntax highlighting
+- [Links](https://nextjs.org) to external resources
+- Footnotes[^1] for additional context
+
+### 📝 Advanced Lists
+
+#### Ordered Lists with Complex Nesting
+
+1. **Getting Started**
+   1. Install dependencies
+      - `npm install next react react-dom`
+      - `npm install @mantine/core @mantine/hooks`
+   2. Configure your project
+   3. Start development server
+
+2. **Building Components**
+   - Create reusable UI components
+   - Implement responsive design
+   - Add proper TypeScript types
+
+3. **Deployment & Optimization**
+   - Set up CI/CD pipelines
+   - Implement performance monitoring
+   - Configure SEO and analytics
+
+#### Unordered Lists with Mixed Content
+
+- ✅ **Completed Features**
+  - Basic MDX rendering
+  - Syntax highlighting for code blocks
+  - Responsive image handling
+
+- 🚧 **In Progress**
+  - Interactive code playgrounds
+  - Advanced component library
+  - Multi-language support
+
+- 🔮 **Future Plans**
+  - Real-time collaboration
+  - AI-powered content suggestions
+  - Advanced analytics dashboard
+
+### 💻 Code Examples
+
+Here's a beautiful code example with syntax highlighting:
+
+```typescript
+// Advanced TypeScript with React
+interface BlogPost {
+  title: string;
+  content: string;
+  author: {
+    name: string;
+    avatar: string;
+    bio: string;
+  };
+  tags: string[];
+  publishedAt: Date;
+  readingTime: number;
+}
+
+// Custom hook for blog interactions
+function useBlogPost(slug: string) {
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPostBySlug(slug).then((data) => {
+      setPost(data);
+      setLoading(false);
+    });
+  }, [slug]);
+
+  return { post, loading };
+}
+
+// Usage in component
+export function BlogPostView({ slug }: { slug: string }) {
+  const { post, loading } = useBlogPost(slug);
+
+  if (loading) return <div>Loading...</div>;
+  if (!post) return <div>Post not found</div>;
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div dangerouslySetInnerHTML={{ __html: post.content }} />
+      <footer>
+        <p>By {post.author.name}</p>
+        <p>{post.readingTime} min read</p>
+      </footer>
+    </article>
+  );
+}
+```
+
+### 🎯 Interactive Elements
+
+#### Callout Boxes
+
+:::info
+💡 **Pro Tip**: MDX allows you to create reusable content blocks that can be styled consistently across your blog.
+:::
+
+:::warning
+⚠️ **Important**: Always validate user input and sanitize HTML content to prevent XSS attacks.
+:::
+
+:::success
+✅ **Achievement Unlocked**: You've successfully created an advanced MDX blog post with interactive components!
+:::
+
+### 📊 Data Visualization
+
+#### Feature Comparison Matrix
+
+| Feature | Markdown Support | MDX Support | Performance | Complexity | Use Case |
+|---------|----------------|-------------|-------------|------------|-----------|
+| **Text Formatting** | ✅ Full support | ✅ Full support | ⭐⭐⭐⭐⭐ | 🟢 Low | Basic content |
+| **Code Blocks** | ✅ Syntax highlighting | ✅ Interactive code | ⭐⭐⭐⭐⭐ | 🟡 Medium | Documentation |
+| **React Components** | ❌ Not supported | ✅ Full integration | ⭐⭐⭐⭐ | 🔴 High | Interactive apps |
+| **Interactive Content** | ❌ Static only | ✅ Dynamic widgets | ⭐⭐⭐ | 🔴 Very High | Web applications |
+| **Custom Styling** | ⚠️ Limited CSS | ✅ Tailwind + CSS-in-JS | ⭐⭐⭐⭐ | 🟡 Medium | Design systems |
+| **Type Safety** | ❌ No TypeScript | ✅ Full TypeScript | ⭐⭐⭐⭐⭐ | 🟢 Low | Enterprise apps |
+| **Build Performance** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 🟡 Medium | Large projects |
+| **Learning Curve** | 🟢 Easy | 🟡 Moderate | 🟢 Easy | 🟢 Easy | Beginners |
+| **Community Support** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | All users |
+| **Ecosystem** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Developers |
+
+### 🎨 Custom Components in MDX
+
+#### Icon Integration
+
+<div style={{ display: 'flex', gap: '1rem', margin: '1rem 0', alignItems: 'center' }}>
+  <IconHeart size={24} style={{ color: 'var(--catppuccin-red)' }} />
+  <IconStar size={24} style={{ color: 'var(--catppuccin-yellow)' }} />
+  <IconCode size={24} style={{ color: 'var(--catppuccin-blue)' }} />
+  <IconRocket size={24} style={{ color: 'var(--catppuccin-green)' }} />
+</div>
+
+### 🔗 Advanced Linking
+
+#### Internal Links
+- [Home Page](/)
+- [Blog Index](/blog)
+- [About Page](/about)
+
+#### External Resources
+- [Next.js Documentation](https://nextjs.org/docs)
+- [MDX Documentation](https://mdxjs.com)
+- [Mantine UI](https://mantine.dev)
+
+#### Reference Links
+This blog is built with [Next.js][next], styled with [Mantine][mantine], and powered by [MDX][mdx].
+
+[next]: https://nextjs.org
+[mantine]: https://mantine.dev
+[mdx]: https://mdxjs.com
+
+### 📚 Blockquotes and Citations
+
+> "The best way to predict the future is to create it." - Peter Drucker
+>
+> This quote reminds us that innovation and proactive action are key to shaping our destiny in technology and development.
+
+#### Nested Blockquotes
+
+> Here's a multi-paragraph blockquote:
+>
+> > This is a nested blockquote that demonstrates hierarchical quoting.
+> >
+> > It can contain multiple paragraphs and maintain proper indentation.
+>
+> Back to the main blockquote level with additional context and explanation.
+
+### 🏷️ Advanced Metadata
+
+**Published**: January 15, 2025
+**Reading Time**: ~5 minutes
+**Word Count**: 1,247 words
+**Last Modified**: January 16, 2025
+
+---
+
+## 🎉 Conclusion
+
+This comprehensive MDX showcase demonstrates the incredible versatility of combining **Markdown** with **React components**. From simple text formatting to complex interactive elements, MDX provides developers with powerful tools for creating engaging, maintainable content.
+
+### 🚀 What's Next?
+
+Stay tuned for more advanced tutorials covering:
+- Custom MDX components
+- Interactive data visualizations
+- Advanced styling techniques
+- Performance optimization strategies
+
+### 📞 Get in Touch
+
+Have questions or suggestions? Reach out via:
+- **Email**: contact@example.com
+- **GitHub**: [github.com/username](https://github.com)
+- **Twitter**: [@username](https://twitter.com)
+
+---
+
+[^1]: MDX (Markdown with JSX) is a format that allows you to write JSX embedded in Markdown documents.

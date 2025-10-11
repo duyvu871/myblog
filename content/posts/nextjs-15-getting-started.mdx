@@ -1,0 +1,89 @@
+---
+title: "Getting Started with Next.js 15"
+description: "Learn about the new features in Next.js 15 and how to get started"
+date: "2025-01-16"
+author: "Bui An Du"
+tags: ["nextjs", "react", "web-development"]
+published: true
+---
+
+# Getting Started with Next.js 15
+
+Next.js 15 brings exciting new features and improvements to the React framework. Let's explore what's new and how to get started.
+
+## New Features in Next.js 15
+
+### App Router Improvements
+
+The App Router in Next.js 15 has been enhanced with:
+
+- Better performance optimizations
+- Improved streaming capabilities
+- Enhanced error boundaries
+
+### Server Components
+
+Server Components are now more stable and offer:
+
+```tsx
+// Example Server Component
+export default async function BlogPost({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug);
+  
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <p>{post.content}</p>
+    </article>
+  );
+}
+```
+
+### Turbopack Integration
+
+Turbopack is now the default bundler for development:
+
+- **Faster builds** - Up to 10x faster than Webpack
+- **Better HMR** - Hot module replacement is nearly instantaneous
+- **Improved caching** - Smart caching reduces rebuild times
+
+## Getting Started
+
+To create a new Next.js 15 project:
+
+```bash
+npx create-next-app@latest my-app
+cd my-app
+npm run dev
+```
+
+### Project Structure
+
+```
+my-app/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css
+├── public/
+├── next.config.js
+└── package.json
+```
+```ts title="useFetch.ts"
+export const useFetch = () => {}
+```
+
+## Best Practices
+
+1. **Use Server Components by default** - They're more efficient
+2. **Implement proper error boundaries** - Handle errors gracefully
+3. **Optimize images** - Use the `next/image` component
+4. **Follow the app directory structure** - Keep related files together
+
+> **Tip**: Always test your application in production mode before deploying!
+
+## Conclusion
+
+Next.js 15 is a significant step forward in React development. The combination of Server Components, improved App Router, and Turbopack makes it an excellent choice for modern web applications.
+
+Happy coding! 🚀

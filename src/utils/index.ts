@@ -11,5 +11,3 @@ export * from './log';
 export * from './format';
 export * from './helpers';
 export * from './validation';
-export * from './tv';
-export * from './cn'

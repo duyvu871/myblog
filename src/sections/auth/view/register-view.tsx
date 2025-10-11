@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Anchor,
-  Checkbox,
-  Divider,
-  Paper,
-  Stack,
-  Text,
-} from '@mantine/core';
+import { Anchor, Checkbox, Divider, Paper, Stack, Text } from '@mantine/core';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { Controller, useForm } from 'react-hook-form';
@@ -42,10 +35,7 @@ export function RegisterView({ onSubmit, isLoading = false, error }: RegisterVie
   };
 
   return (
-    <AuthLayout
-      title="Create an Account"
-      subtitle="Sign up now to get started with an account."
-    >
+    <AuthLayout title="Create an Account" subtitle="Sign up now to get started with an account.">
       {/* Google Sign Up */}
       <OAuthButton provider="google" action="signup" />
 
@@ -56,7 +46,14 @@ export function RegisterView({ onSubmit, isLoading = false, error }: RegisterVie
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <Stack gap="md">
           {error && (
-            <Paper p="xs" bg="red.0" c="red.6" style={{ border: '1px solid #fecaca' }}>
+            <Paper
+              p="xs"
+              style={{
+                backgroundColor: 'var(--catppuccin-surface0)',
+                color: 'var(--catppuccin-red)',
+                border: `1px solid var(--catppuccin-red)`,
+              }}
+            >
               <Text size="sm" ta="center">
                 {error}
               </Text>
@@ -123,7 +120,7 @@ export function RegisterView({ onSubmit, isLoading = false, error }: RegisterVie
             label={
               <Text size="sm">
                 I have read and agree to the{' '}
-                <Anchor component={Link} href="/terms" c="blue.6">
+                <Anchor component={Link} href="/terms" c="blue">
                   Terms of Service
                 </Anchor>
               </Text>
@@ -131,14 +128,7 @@ export function RegisterView({ onSubmit, isLoading = false, error }: RegisterVie
             size="sm"
           />
 
-          <FormButton
-            type="submit"
-            
-            variant="primary"
-            fullWidth
-            loading={isLoading}
-            mt="md"
-          >
+          <FormButton type="submit" variant="primary" fullWidth loading={isLoading} mt="md">
             {isLoading ? 'Creating account...' : 'Get Started'}
           </FormButton>
         </Stack>
@@ -147,7 +137,12 @@ export function RegisterView({ onSubmit, isLoading = false, error }: RegisterVie
       {/* Footer */}
       <Text ta="center" size="sm" c="dimmed">
         Already have an account?{' '}
-        <Anchor component={Link} href="/auth/login" fw={500} c="blue.6">
+        <Anchor
+          component={Link}
+          href="/auth/login"
+          fw={500}
+          style={{ color: 'var(--catppuccin-blue)' }}
+        >
           Log in
         </Anchor>
       </Text>

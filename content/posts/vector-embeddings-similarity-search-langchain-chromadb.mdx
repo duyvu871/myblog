@@ -1,0 +1,685 @@
+---
+title: "Vector Embeddings and Similarity Search in LangChain and ChromaDB"
+description: "Deep dive into embeddings, vector representations, and similarity algorithms for RAG systems"
+date: "2025-01-20"
+author: "Bui An Du"
+tags: ["langchain", "chromadb", "embeddings", "vector-search", "similarity-search", "machine-learning"]
+published: true
+thumbnail: "/images/vector-embeddings-similarity-thumbnail.png"
+---
+
+import { IconVector, IconSearch, IconMath, IconBrain } from '@tabler/icons-react';
+
+# 🧮 Vector Embeddings and Similarity Search
+
+<div style={{ textAlign: 'center', margin: '2rem 0', padding: '1.5rem', backgroundColor: 'var(--catppuccin-surface0)', borderRadius: '12px', border: '1px solid var(--catppuccin-surface1)' }}>
+  <h2 style={{ margin: '0 0 0.5rem 0', color: 'var(--catppuccin-green)' }}>🔍 From Text to Vectors: The Heart of RAG</h2>
+  <p style={{ margin: '0', color: 'var(--catppuccin-text)' }}>
+    Understanding embeddings, distance metrics, and search algorithms that power intelligent retrieval
+  </p>
+</div>
+
+## Understanding Vector Embeddings
+
+### What are Embeddings?
+
+**Embeddings** are dense vector representations of text that capture semantic meaning and relationships. Unlike sparse representations (like one-hot encoding), embeddings place similar concepts close together in vector space.
+
+```python
+import numpy as np
+from typing import List
+
+# Conceptual representation of embeddings
+class ConceptualEmbeddings:
+    def __init__(self):
+        # In practice, these would be learned from data
+        self.embeddings = {
+            "cat": np.array([0.8, 0.6, -0.2]),
+            "dog": np.array([0.7, 0.5, -0.1]),
+            "car": np.array([-0.3, 0.9, 0.8]),
+            "truck": np.array([-0.4, 0.8, 0.7]),
+            "apple": np.array([0.1, -0.2, 0.9]),
+            "banana": np.array([0.2, -0.3, 0.8])
+        }
+
+    def get_embedding(self, word: str):
+        """Get embedding for a word"""
+        return self.embeddings.get(word, np.random.rand(3))
+
+    def demonstrate_similarity(self):
+        """Show semantic relationships"""
+        cat_emb = self.get_embedding("cat")
+        dog_emb = self.get_embedding("dog")
+        car_emb = self.get_embedding("car")
+
+        print("Cat vs Dog similarity:", self.cosine_similarity(cat_emb, dog_emb))
+        print("Cat vs Car similarity:", self.cosine_similarity(cat_emb, car_emb))
+
+    def cosine_similarity(self, vec1, vec2):
+        """Calculate cosine similarity"""
+        dot_product = np.dot(vec1, vec2)
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+        return dot_product / (norm1 * norm2)
+```
+
+### Embedding Models in LangChain
+
+```python
+from langchain.embeddings import (
+    OpenAIEmbeddings,           # OpenAI's text-embedding models
+    HuggingFaceEmbeddings,      # Open-source models from HuggingFace
+    CohereEmbeddings,           # Cohere's embedding models
+    SentenceTransformerEmbeddings, # Local sentence transformers
+    LlamaCppEmbeddings,         # Llama.cpp models
+    TensorflowHubEmbeddings,    # TensorFlow Hub models
+)
+
+# Different embedding model configurations
+embedding_configs = {
+    "openai_ada": {
+        "class": OpenAIEmbeddings,
+        "model": "text-embedding-ada-002",
+        "dimensions": 1536
+    },
+    "openai_large": {
+        "class": OpenAIEmbeddings,
+        "model": "text-embedding-3-large",
+        "dimensions": 3072
+    },
+    "huggingface_e5": {
+        "class": HuggingFaceEmbeddings,
+        "model_name": "intfloat/e5-large-v2",
+        "dimensions": 1024
+    },
+    "cohere_multilingual": {
+        "class": CohereEmbeddings,
+        "model": "embed-multilingual-v2.0",
+        "dimensions": 4096
+    }
+}
+```
+
+## Advanced Embedding Techniques
+
+### Multi-Task Embeddings
+
+```python
+from sentence_transformers import SentenceTransformer
+from typing import List, Dict
+
+class MultiTaskEmbedder:
+    def __init__(self, model_name: str = "sentence-transformers/multi-qa-mpnet-base-dot-v1"):
+        self.model = SentenceTransformer(model_name)
+        self.tasks = {
+            'query': 'query: ',
+            'document': 'passage: ',
+            'instruction': 'instruction: '
+        }
+
+    def embed_query(self, query: str) -> List[float]:
+        """Embed a query with query prefix"""
+        prefixed_query = self.tasks['query'] + query
+        return self.model.encode(prefixed_query).tolist()
+
+    def embed_document(self, document: str) -> List[float]:
+        """Embed a document with passage prefix"""
+        prefixed_doc = self.tasks['document'] + document
+        return self.model.encode(prefixed_doc).tolist()
+
+    def embed_instruction(self, instruction: str) -> List[float]:
+        """Embed an instruction"""
+        prefixed_instruction = self.tasks['instruction'] + instruction
+        return self.model.encode(prefixed_instruction).tolist()
+
+    def batch_embed(self, texts: List[str], task: str = 'document') -> List[List[float]]:
+        """Batch embed multiple texts"""
+        prefixed_texts = [self.tasks[task] + text for text in texts]
+        embeddings = self.model.encode(prefixed_texts)
+        return embeddings.tolist()
+
+# Usage
+embedder = MultiTaskEmbedder()
+
+# Different embeddings for different purposes
+query_emb = embedder.embed_query("How does machine learning work?")
+doc_emb = embedder.embed_document("Machine learning is a subset of AI...")
+instruction_emb = embedder.embed_instruction("Explain the concept clearly")
+```
+
+### Instruction-Tuned Embeddings
+
+```python
+class InstructionTunedEmbedder:
+    def __init__(self):
+        # Using models like Instructor-XL
+        self.model = SentenceTransformer('hkunlp/instructor-xl')
+
+    def embed_with_instruction(self, text: str, instruction: str) -> List[float]:
+        """Embed text with specific instruction"""
+        # Instructor models take [instruction, text] pairs
+        embedding = self.model.encode([[instruction, text]])
+        return embedding[0].tolist()
+
+    def get_instruction_embeddings(self, queries_and_instructions):
+        """Get embeddings for multiple query-instruction pairs"""
+        instruction_pairs = []
+        for query, instruction in queries_and_instructions:
+            instruction_pairs.append([instruction, query])
+
+        embeddings = self.model.encode(instruction_pairs)
+        return embeddings.tolist()
+
+# Example usage
+instructor_embedder = InstructionTunedEmbedder()
+
+# Different instructions for different search intents
+search_configs = [
+    ("machine learning algorithms", "Represent the topic for retrieving scientific papers"),
+    ("machine learning algorithms", "Represent the topic for retrieving educational content"),
+    ("machine learning algorithms", "Represent the topic for retrieving code examples"),
+]
+
+embeddings = instructor_embedder.get_instruction_embeddings(search_configs)
+```
+
+## Similarity Metrics and Distance Functions
+
+### Cosine Similarity
+
+```python
+import numpy as np
+from typing import List, Tuple
+
+class SimilarityMetrics:
+    @staticmethod
+    def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        vec1 = np.array(vec1)
+        vec2 = np.array(vec2)
+
+        dot_product = np.dot(vec1, vec2)
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+
+        return dot_product / (norm1 * norm2)
+
+    @staticmethod
+    def euclidean_distance(vec1: List[float], vec2: List[float]) -> float:
+        """Calculate Euclidean distance"""
+        vec1 = np.array(vec1)
+        vec2 = np.array(vec2)
+        return np.linalg.norm(vec1 - vec2)
+
+    @staticmethod
+    def manhattan_distance(vec1: List[float], vec2: List[float]) -> float:
+        """Calculate Manhattan distance"""
+        vec1 = np.array(vec1)
+        vec2 = np.array(vec2)
+        return np.sum(np.abs(vec1 - vec2))
+
+    @staticmethod
+    def dot_product_similarity(vec1: List[float], vec2: List[float]) -> float:
+        """Calculate dot product similarity"""
+        vec1 = np.array(vec1)
+        vec2 = np.array(vec2)
+        return np.dot(vec1, vec2)
+
+# Comparative analysis
+def compare_similarity_metrics(query_vec: List[float], doc_vecs: List[List[float]]):
+    """Compare different similarity metrics"""
+    results = []
+
+    for i, doc_vec in enumerate(doc_vecs):
+        cosine_sim = SimilarityMetrics.cosine_similarity(query_vec, doc_vec)
+        euclidean_dist = SimilarityMetrics.euclidean_distance(query_vec, doc_vec)
+        manhattan_dist = SimilarityMetrics.manhattan_distance(query_vec, doc_vec)
+        dot_product = SimilarityMetrics.dot_product_similarity(query_vec, doc_vec)
+
+        results.append({
+            'doc_id': i,
+            'cosine_similarity': cosine_sim,
+            'euclidean_distance': euclidean_dist,
+            'manhattan_distance': manhattan_dist,
+            'dot_product': dot_product
+        })
+
+    return results
+```
+
+### Choosing the Right Similarity Metric
+
+| Metric | Use Case | Pros | Cons |
+|--------|----------|------|------|
+| **Cosine Similarity** | Text similarity, high-dimensional data | Normalized, angle-based, handles different magnitudes | Doesn't consider magnitude |
+| **Euclidean Distance** | Spatial data, when magnitude matters | Intuitive, considers vector magnitude | Sensitive to scale differences |
+| **Manhattan Distance** | High-dimensional sparse data | Robust to outliers, computationally efficient | Doesn't consider diagonal distances |
+| **Dot Product** | When vectors are normalized | Fast computation, good for recommendation systems | Sensitive to vector magnitude |
+
+## ChromaDB Similarity Search
+
+### Basic Similarity Search
+
+```python
+import chromadb
+from chromadb.config import Settings
+
+class ChromaSimilaritySearch:
+    def __init__(self, collection_name: str = "documents"):
+        self.client = chromadb.PersistentClient(
+            path="./chroma_db",
+            settings=Settings(anonymized_telemetry=False)
+        )
+        self.collection_name = collection_name
+
+    def setup_collection(self, documents: List[str], embeddings: List[List[float]], metadatas=None):
+        """Set up collection with documents and embeddings"""
+        collection = self.client.get_or_create_collection(
+            name=self.collection_name,
+            metadata={"description": "Vector similarity search collection"}
+        )
+
+        # Add documents
+        ids = [f"doc_{i}" for i in range(len(documents))]
+        collection.add(
+            documents=documents,
+            embeddings=embeddings,
+            metadatas=metadatas or [{} for _ in documents],
+            ids=ids
+        )
+
+    def similarity_search(self, query_embedding: List[float], n_results: int = 5):
+        """Perform similarity search"""
+        collection = self.client.get_collection(self.collection_name)
+
+        results = collection.query(
+            query_embeddings=[query_embedding],
+            n_results=n_results,
+            include=['documents', 'metadatas', 'distances']
+        )
+
+        return results
+
+    def hybrid_search(self, query_text: str, query_embedding: List[float],
+                     n_results: int = 5, alpha: float = 0.5):
+        """Combine semantic and lexical search"""
+        collection = self.client.get_collection(self.collection_name)
+
+        results = collection.query(
+            query_texts=[query_text],
+            query_embeddings=[query_embedding],
+            n_results=n_results * 2,  # Get more candidates
+            include=['documents', 'metadatas', 'distances']
+        )
+
+        # Combine scores (this is a simplified implementation)
+        combined_results = []
+        for i in range(len(results['documents'][0])):
+            # In practice, you'd need to implement proper hybrid scoring
+            combined_results.append({
+                'document': results['documents'][0][i],
+                'metadata': results['metadatas'][0][i],
+                'distance': results['distances'][0][i]
+            })
+
+        return combined_results[:n_results]
+```
+
+### Advanced ChromaDB Queries
+
+```python
+class AdvancedChromaSearch:
+    def __init__(self, collection_name: str):
+        self.client = chromadb.PersistentClient(path="./chroma_db")
+        self.collection = self.client.get_collection(collection_name)
+
+    def filtered_similarity_search(self, query_embedding: List[float],
+                                 filters: Dict = None, n_results: int = 5):
+        """Search with metadata filters"""
+        where_clause = {}
+        if filters:
+            where_clause = filters
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=n_results,
+            where=where_clause,
+            include=['documents', 'metadatas', 'distances']
+        )
+
+        return results
+
+    def multi_vector_search(self, query_embeddings: List[List[float]], n_results: int = 5):
+        """Search with multiple query vectors"""
+        results = self.collection.query(
+            query_embeddings=query_embeddings,
+            n_results=n_results,
+            include=['documents', 'metadatas', 'distances']
+        )
+
+        return results
+
+    def range_search(self, query_embedding: List[float], max_distance: float):
+        """Find all vectors within a distance range"""
+        # ChromaDB doesn't directly support range queries, but we can filter results
+        all_results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=1000,  # Get many results
+            include=['documents', 'metadatas', 'distances']
+        )
+
+        # Filter by distance
+        filtered_results = []
+        for i, distance in enumerate(all_results['distances'][0]):
+            if distance <= max_distance:
+                filtered_results.append({
+                    'document': all_results['documents'][0][i],
+                    'metadata': all_results['metadatas'][0][i],
+                    'distance': distance
+                })
+
+        return filtered_results
+
+    def batch_similarity_search(self, query_embeddings: List[List[float]], batch_size: int = 10):
+        """Process multiple queries in batches"""
+        all_results = []
+
+        for i in range(0, len(query_embeddings), batch_size):
+            batch = query_embeddings[i:i + batch_size]
+
+            results = self.collection.query(
+                query_embeddings=batch,
+                n_results=5,
+                include=['documents', 'metadatas', 'distances']
+            )
+
+            all_results.extend(results)
+
+        return all_results
+```
+
+## Optimizing Embeddings and Search
+
+### Embedding Compression and Quantization
+
+```python
+import numpy as np
+from sklearn.decomposition import PCA
+from typing import List
+
+class EmbeddingOptimizer:
+    def __init__(self, target_dimensions: int = 256):
+        self.target_dims = target_dimensions
+        self.pca = None
+
+    def fit_pca(self, embeddings: List[List[float]]):
+        """Fit PCA on training embeddings"""
+        embeddings_array = np.array(embeddings)
+        self.pca = PCA(n_components=self.target_dims)
+        self.pca.fit(embeddings_array)
+
+    def compress_embeddings(self, embeddings: List[List[float]]) -> List[List[float]]:
+        """Compress embeddings using PCA"""
+        if self.pca is None:
+            raise ValueError("PCA must be fitted first")
+
+        embeddings_array = np.array(embeddings)
+        compressed = self.pca.transform(embeddings_array)
+        return compressed.tolist()
+
+    def quantize_embeddings(self, embeddings: List[List[float]], bits: int = 8) -> List[List[int]]:
+        """Quantize embeddings to reduce memory usage"""
+        embeddings_array = np.array(embeddings)
+
+        # Simple quantization: scale to 0-255 range for 8-bit
+        if bits == 8:
+            min_vals = embeddings_array.min(axis=0)
+            max_vals = embeddings_array.max(axis=0)
+
+            # Avoid division by zero
+            range_vals = max_vals - min_vals
+            range_vals[range_vals == 0] = 1
+
+            quantized = ((embeddings_array - min_vals) / range_vals * 255).astype(np.uint8)
+            return quantized.tolist()
+
+        return embeddings  # Return original if quantization not supported
+
+# Usage
+optimizer = EmbeddingOptimizer(target_dimensions=256)
+optimizer.fit_pca(training_embeddings)
+
+# Compress new embeddings
+compressed = optimizer.compress_embeddings(new_embeddings)
+quantized = optimizer.quantize_embeddings(compressed, bits=8)
+```
+
+### Approximate Nearest Neighbor Search
+
+```python
+class ApproximateSearch:
+    def __init__(self, embeddings: List[List[float]], n_clusters: int = 100):
+        self.embeddings = np.array(embeddings)
+        self.n_clusters = n_clusters
+        self.cluster_centers = None
+        self.cluster_assignments = None
+
+    def build_index(self):
+        """Build approximate search index using clustering"""
+        from sklearn.cluster import KMeans
+
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
+        self.cluster_assignments = kmeans.fit_predict(self.embeddings)
+        self.cluster_centers = kmeans.cluster_centers_
+
+    def approximate_search(self, query_embedding: List[float], k: int = 5):
+        """Approximate nearest neighbor search"""
+        if self.cluster_centers is None:
+            raise ValueError("Index must be built first")
+
+        query = np.array(query_embedding)
+
+        # Find closest clusters
+        distances_to_centers = np.linalg.norm(self.cluster_centers - query, axis=1)
+        closest_clusters = np.argsort(distances_to_centers)[:5]  # Check top 5 clusters
+
+        # Search within closest clusters
+        candidates = []
+        for cluster_id in closest_clusters:
+            cluster_indices = np.where(self.cluster_assignments == cluster_id)[0]
+
+            for idx in cluster_indices:
+                distance = np.linalg.norm(self.embeddings[idx] - query)
+                candidates.append((idx, distance))
+
+        # Return top k from candidates
+        candidates.sort(key=lambda x: x[1])
+        return candidates[:k]
+```
+
+## Evaluating Embedding Quality
+
+### Intrinsic Evaluation Metrics
+
+```python
+class EmbeddingEvaluator:
+    def __init__(self, embeddings_dict: Dict[str, List[float]]):
+        self.embeddings = embeddings_dict
+
+    def evaluate_word_similarity(self, word_pairs: List[Tuple[str, str, float]]):
+        """Evaluate embedding quality using word similarity"""
+        predicted_similarities = []
+        actual_similarities = []
+
+        for word1, word2, actual_sim in word_pairs:
+            if word1 in self.embeddings and word2 in self.embeddings:
+                predicted_sim = SimilarityMetrics.cosine_similarity(
+                    self.embeddings[word1],
+                    self.embeddings[word2]
+                )
+                predicted_similarities.append(predicted_sim)
+                actual_similarities.append(actual_sim)
+
+        # Calculate correlation
+        from scipy.stats import pearsonr
+        correlation, _ = pearsonr(predicted_similarities, actual_similarities)
+
+        return correlation
+
+    def evaluate_analogy_solving(self, analogies: List[Tuple[str, str, str, str]]):
+        """Evaluate embeddings on analogy solving (king - man + woman = queen)"""
+        correct = 0
+        total = 0
+
+        for word1, word2, word3, expected in analogies:
+            if all(word in self.embeddings for word in [word1, word2, word3, expected]):
+                total += 1
+
+                # Calculate analogy: word1 - word2 + word3
+                vec1 = np.array(self.embeddings[word1])
+                vec2 = np.array(self.embeddings[word2])
+                vec3 = np.array(self.embeddings[word3])
+
+                predicted_vec = vec1 - vec2 + vec3
+
+                # Find closest word to predicted vector
+                best_word = None
+                best_similarity = -1
+
+                for word, embedding in self.embeddings.items():
+                    if word not in [word1, word2, word3]:
+                        similarity = SimilarityMetrics.cosine_similarity(
+                            predicted_vec.tolist(),
+                            embedding
+                        )
+                        if similarity > best_similarity:
+                            best_similarity = similarity
+                            best_word = word
+
+                if best_word == expected:
+                    correct += 1
+
+        return correct / total if total > 0 else 0
+```
+
+### Downstream Task Evaluation
+
+```python
+class RetrievalEvaluator:
+    def __init__(self, vectorstore, test_queries: List[str], relevant_docs: Dict[str, List[str]]):
+        self.vectorstore = vectorstore
+        self.test_queries = test_queries
+        self.relevant_docs = relevant_docs
+
+    def evaluate_retrieval_quality(self, k: int = 5):
+        """Evaluate retrieval quality using standard metrics"""
+        all_precisions = []
+        all_recalls = []
+        all_ndcgs = []
+
+        for query in self.test_queries:
+            if query not in self.relevant_docs:
+                continue
+
+            # Get retrieved documents
+            retrieved = self.vectorstore.similarity_search(query, k=k)
+            retrieved_ids = [doc.metadata.get('id', doc.page_content[:100]) for doc in retrieved]
+
+            # Get relevant documents
+            relevant_ids = self.relevant_docs[query]
+
+            # Calculate metrics
+            precision = self._precision_at_k(retrieved_ids, relevant_ids, k)
+            recall = self._recall_at_k(retrieved_ids, relevant_ids, k)
+            ndcg = self._ndcg_at_k(retrieved_ids, relevant_ids, k)
+
+            all_precisions.append(precision)
+            all_recalls.append(recall)
+            all_ndcgs.append(ndcg)
+
+        return {
+            'mean_precision@k': np.mean(all_precisions),
+            'mean_recall@k': np.mean(all_recalls),
+            'mean_ndcg@k': np.mean(all_ndcgs)
+        }
+
+    def _precision_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
+        """Calculate Precision@K"""
+        retrieved_at_k = retrieved[:k]
+        relevant_retrieved = len(set(retrieved_at_k) & set(relevant))
+        return relevant_retrieved / k if k > 0 else 0
+
+    def _recall_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
+        """Calculate Recall@K"""
+        retrieved_at_k = retrieved[:k]
+        relevant_retrieved = len(set(retrieved_at_k) & set(relevant))
+        return relevant_retrieved / len(relevant) if len(relevant) > 0 else 0
+
+    def _ndcg_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
+        """Calculate NDCG@K"""
+        retrieved_at_k = retrieved[:k]
+
+        dcg = 0
+        for i, doc_id in enumerate(retrieved_at_k):
+            if doc_id in relevant:
+                dcg += 1 / np.log2(i + 2)  # i+2 because positions start from 1
+
+        # Calculate IDCG (ideal DCG)
+        idcg = sum(1 / np.log2(i + 2) for i in range(min(k, len(relevant))))
+
+        return dcg / idcg if idcg > 0 else 0
+```
+
+## Best Practices for Embeddings
+
+### Choosing the Right Model
+
+```python
+# Model selection guide
+embedding_model_guide = {
+    'speed_priority': {
+        'models': ['text-embedding-3-small', 'all-MiniLM-L6-v2'],
+        'dimensions': [1536, 384],
+        'use_case': 'Real-time applications, high throughput'
+    },
+    'quality_priority': {
+        'models': ['text-embedding-3-large', 'e5-large-v2'],
+        'dimensions': [3072, 1024],
+        'use_case': 'Research, complex reasoning tasks'
+    },
+    'multilingual': {
+        'models': ['paraphrase-multilingual-MiniLM-L12-v2', 'embed-multilingual-v2.0'],
+        'dimensions': [384, 4096],
+        'use_case': 'International applications'
+    },
+    'domain_specific': {
+        'models': ['sentence-transformers domain models'],
+        'dimensions': 'Varies',
+        'use_case': 'Legal, medical, technical domains'
+    }
+}
+```
+
+### Optimization Strategies
+
+1. **Batch Processing**: Process multiple texts together for efficiency
+2. **Caching**: Cache embeddings for frequently accessed content
+3. **Quantization**: Reduce precision to save memory and computation
+4. **Dimensionality Reduction**: Use PCA or other techniques to reduce dimensions
+5. **Approximate Search**: Use ANN algorithms for large-scale search
+6. **Index Optimization**: Choose appropriate indexing strategies for your use case
+
+## Conclusion
+
+Vector embeddings and similarity search form the foundation of effective RAG systems. Understanding the nuances of different embedding models, similarity metrics, and search algorithms is crucial for building high-performance retrieval systems.
+
+Key takeaways:
+- Choose embedding models based on your specific use case and constraints
+- Experiment with different similarity metrics for optimal results
+- Implement proper evaluation pipelines to measure performance
+- Optimize for both quality and efficiency based on your requirements
+
+The right combination of embeddings and search strategies can significantly improve your RAG system's ability to retrieve relevant information. 🔍✨

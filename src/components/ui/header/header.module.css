@@ -1,0 +1,81 @@
+/* Theme selector menu item styles */
+.themeMenuItem {
+  transition: all 0.2s ease;
+}
+
+.themeMenuItem:hover {
+  background-color: var(--mantine-color-gray-1);
+}
+
+.themeMenuItemActive {
+  background-color: var(--catppuccin-surface0) !important;
+  font-weight: 600;
+}
+
+/* Desktop navigation link styles */
+.navLink {
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: var(--mantine-color-lavender-6) !important;
+}
+
+/* .navLinkActive::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--mantine-color-lavender-6);
+  border-radius: 1px;
+} */
+
+/* User menu button styles */
+.userMenuButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.userMenuButton:hover {
+  background-color: var(--mantine-color-gray-1);
+}
+
+/* Mobile navigation button styles */
+.mobileNavButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mobileNavButton:hover {
+  background-color: var(--mantine-color-gray-1);
+}
+
+/* Mobile menu item styles */
+.mobileMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mobileMenuItem:hover {
+  background-color: var(--mantine-color-gray-1);
+}

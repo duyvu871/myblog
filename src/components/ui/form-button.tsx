@@ -1,15 +1,18 @@
 import { Button, type ButtonProps } from '@mantine/core';
-import { forwardRef,  type ComponentProps } from 'react';
+import { forwardRef, type ComponentProps } from 'react';
 
 const buttonVariants = {
   primary: {
     root: {
-      backgroundColor: '#3b82f6',
+      backgroundColor: 'var(--catppuccin-blue)',
+      color: 'var(--catppuccin-base)',
       '&:hover': {
-        backgroundColor: '#2563eb',
+        backgroundColor: 'var(--catppuccin-blue)',
+        filter: 'brightness(0.9)',
       },
       '&:disabled': {
-        backgroundColor: '#9ca3af',
+        backgroundColor: 'var(--catppuccin-overlay0)',
+        color: 'var(--catppuccin-subtext0)',
         opacity: 0.5,
       },
       borderRadius: '8px',
@@ -19,11 +22,11 @@ const buttonVariants = {
   },
   outline: {
     root: {
-      border: '1px solid #e9ecef',
-      color: '#495057',
-      backgroundColor: 'white',
+      border: `1px solid var(--catppuccin-surface1)`,
+      color: 'var(--catppuccin-text)',
+      backgroundColor: 'var(--catppuccin-surface0)',
       '&:hover': {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'var(--catppuccin-surface1)',
       },
       borderRadius: '8px',
       padding: '12px',
@@ -36,17 +39,12 @@ interface FormButtonProps extends Omit<ButtonProps, 'variant'> {
   variant?: 'primary' | 'outline';
 }
 
-export const FormButton = forwardRef<HTMLButtonElement, FormButtonProps & ComponentProps<"button">>(
+export const FormButton = forwardRef<HTMLButtonElement, FormButtonProps & ComponentProps<'button'>>(
   ({ variant = 'primary', size = 'md', styles, children, ...props }, ref) => {
     const variantStyles = buttonVariants[variant];
-    
+
     return (
-      <Button
-        ref={ref}
-        size={size}
-        styles={{ ...variantStyles, ...styles }}
-        {...props}
-      >
+      <Button ref={ref} size={size} styles={{ ...variantStyles, ...styles }} {...props}>
         {children}
       </Button>
     );

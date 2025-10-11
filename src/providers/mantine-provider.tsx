@@ -1,13 +1,24 @@
 'use client';
 
-import { MantineProvider as Provider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
+import { MantineProvider } from '@mantine/core';
+import { useServerInsertedHTML } from 'next/navigation';
+import { theme } from 'app/lib/theme/mantine-theme';
 
-export default function MantineProvider({ children }: { children: React.ReactNode }) {
+export default function Providers({ children }: { children: React.ReactNode }) {
+  // Prevents hydration mismatch
+  useServerInsertedHTML(() => null);
+
   return (
-    <Provider defaultColorScheme="light">
-      {children}
-      <Notifications />
-    </Provider>
+    <MantineProvider theme={theme} defaultColorScheme="dark">
+      <div
+        style={{
+          backgroundColor: 'var(--catppuccin-base)',
+          color: 'var(--catppuccin-text)',
+          minHeight: '100dvh',
+        }}
+      >
+        {children}
+      </div>
+    </MantineProvider>
   );
 }

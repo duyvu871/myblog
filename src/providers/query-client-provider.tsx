@@ -28,7 +28,7 @@ export default function QueryClientProvider({ children }: QueryClientProviderPro
   return (
     <TanstackQueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={process.env.NEXT_PUBLIC_ENVIRONMENT === 'development'} />
+      {/* <ReactQueryDevtools initialIsOpen={process.env.NEXT_PUBLIC_ENVIRONMENT === 'development'} position='left' /> */}
     </TanstackQueryClientProvider>
   );
 }

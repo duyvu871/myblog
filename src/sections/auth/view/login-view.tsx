@@ -44,7 +44,14 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <Stack gap="md">
           {successMessage && (
-            <Paper p="xs" bg="green.0" c="green.6" style={{ border: '1px solid #bbf7d0' }}>
+            <Paper
+              p="xs"
+              style={{
+                backgroundColor: 'var(--catppuccin-surface0)',
+                color: 'var(--catppuccin-green)',
+                border: `1px solid var(--catppuccin-green)`,
+              }}
+            >
               <Text size="sm" ta="center">
                 {successMessage}
               </Text>
@@ -52,7 +59,14 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
           )}
 
           {error && (
-            <Paper p="xs" bg="red.0" c="red.6" style={{ border: '1px solid #fecaca' }}>
+            <Paper
+              p="xs"
+              style={{
+                backgroundColor: 'var(--catppuccin-surface0)',
+                color: 'var(--catppuccin-red)',
+                border: `1px solid var(--catppuccin-red)`,
+              }}
+            >
               <Text size="sm" ta="center">
                 {error}
               </Text>
@@ -89,7 +103,12 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
 
           <Group justify="space-between" mt="xs">
             <Checkbox label="Remember me" size="sm" />
-            <Anchor component={Link} href="/auth/forgot-password" size="sm" c="blue.6">
+            <Anchor
+              component={Link}
+              href="/auth/forgot-password"
+              size="sm"
+              style={{ color: 'var(--catppuccin-blue)' }}
+            >
               Forgot Password?
             </Anchor>
           </Group>
@@ -103,7 +122,12 @@ export function LoginView({ onSubmit, isLoading = false, error, successMessage }
       {/* Footer */}
       <Text ta="center" size="sm" c="dimmed">
         Don't have an account?{' '}
-        <Anchor component={Link} href="/auth/register" fw={500} c="blue.6">
+        <Anchor
+          component={Link}
+          href="/auth/register"
+          fw={500}
+          style={{ color: 'var(--catppuccin-blue)' }}
+        >
           Sign Up
         </Anchor>
       </Text>

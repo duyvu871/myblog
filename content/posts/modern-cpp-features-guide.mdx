@@ -1,0 +1,575 @@
+---
+title: "Modern C++ Features: A Complete Guide"
+description: "Explore modern C++ features from C++11 to C++23, including smart pointers, lambdas, ranges, and more"
+date: "2025-01-14"
+author: "Bui An Du"
+tags: ["cpp", "programming", "modern-cpp", "c++20", "c++23"]
+published: true
+thumbnail: "/images/modern-cpp-thumbnail.png"
+---
+
+# Modern C++ Features: A Complete Guide
+
+C++ has evolved significantly since its creation, with each new standard introducing powerful features that make the language more expressive, safer, and easier to use. Let's explore the most important modern C++ features that every developer should know.
+
+## C++11: The Game Changer
+
+C++11 introduced revolutionary features that transformed C++ programming:
+
+### Auto Keyword
+The `auto` keyword enables automatic type deduction:
+
+```cpp
+#include <vector>
+#include <map>
+
+int main() {
+    // Before C++11
+    std::vector<int>::iterator it = vec.begin();
+    
+    // C++11 and later
+    auto it = vec.begin();
+    
+    // Complex types made simple
+    auto lambda = [](int x) { return x * 2; };
+    auto map_pair = std::make_pair("key", 42);
+    
+    return 0;
+}
+```
+
+### Range-Based For Loops
+Simplified iteration over containers:
+
+```cpp
+#include <vector>
+#include <iostream>
+
+int main() {
+    std::vector<int> numbers = {1, 2, 3, 4, 5};
+    
+    // Traditional loop
+    for (size_t i = 0; i < numbers.size(); ++i) {
+        std::cout << numbers[i] << " ";
+    }
+    
+    // Range-based for loop
+    for (const auto& num : numbers) {
+        std::cout << num << " ";
+    }
+    
+    // Modifying elements
+    for (auto& num : numbers) {
+        num *= 2;
+    }
+    
+    return 0;
+}
+```
+
+### Smart Pointers
+Automatic memory management with RAII:
+
+```cpp
+#include <memory>
+#include <iostream>
+
+class Resource {
+public:
+    Resource(int id) : id_(id) {
+        std::cout << "Resource " << id_ << " created\n";
+    }
+    
+    ~Resource() {
+        std::cout << "Resource " << id_ << " destroyed\n";
+    }
+    
+    void use() const {
+        std::cout << "Using resource " << id_ << "\n";
+    }
+    
+private:
+    int id_;
+};
+
+int main() {
+    // unique_ptr - exclusive ownership
+    {
+        auto resource = std::make_unique<Resource>(1);
+        resource->use();
+    } // Automatically destroyed here
+    
+    // shared_ptr - shared ownership
+    {
+        auto resource1 = std::make_shared<Resource>(2);
+        auto resource2 = resource1; // Shared ownership
+        
+        std::cout << "Reference count: " << resource1.use_count() << "\n";
+        
+        resource1->use();
+        resource2->use();
+    } // Destroyed when last shared_ptr goes out of scope
+    
+    return 0;
+}
+```
+
+### Lambda Expressions
+Anonymous functions for cleaner code:
+
+```cpp
+#include <algorithm>
+#include <vector>
+#include <iostream>
+
+int main() {
+    std::vector<int> numbers = {5, 2, 8, 1, 9, 3};
+    
+    // Simple lambda
+    auto print = [](int x) { std::cout << x << " "; };
+    
+    // Lambda with capture
+    int multiplier = 3;
+    auto multiply = [multiplier](int x) { return x * multiplier; };
+    
+    // Using lambdas with algorithms
+    std::sort(numbers.begin(), numbers.end(), 
+              [](int a, int b) { return a < b; });
+    
+    std::for_each(numbers.begin(), numbers.end(), print);
+    
+    // Transform with lambda
+    std::transform(numbers.begin(), numbers.end(), numbers.begin(),
+                   [](int x) { return x * x; });
+    
+    return 0;
+}
+```
+
+## C++14: Refinements and Improvements
+
+### Generic Lambdas
+Lambdas can now use `auto` parameters:
+
+```cpp
+#include <iostream>
+#include <string>
+
+int main() {
+    auto generic_lambda = [](auto x, auto y) {
+        return x + y;
+    };
+    
+    std::cout << generic_lambda(1, 2) << "\n";           // int + int
+    std::cout << generic_lambda(1.5, 2.5) << "\n";      // double + double
+    std::cout << generic_lambda(std::string("Hello"), 
+                               std::string(" World")) << "\n"; // string + string
+    
+    return 0;
+}
+```
+
+### Variable Templates
+Templates for variables:
+
+```cpp
+#include <iostream>
+
+template<typename T>
+constexpr T pi = T(3.14159265358979323846);
+
+template<typename T>
+constexpr T e = T(2.71828182845904523536);
+
+int main() {
+    std::cout << "Pi as float: " << pi<float> << "\n";
+    std::cout << "Pi as double: " << pi<double> << "\n";
+    std::cout << "e as long double: " << e<long double> << "\n";
+    
+    return 0;
+}
+```
+
+## C++17: Major Language Enhancements
+
+### Structured Bindings
+Decompose objects into individual variables:
+
+```cpp
+#include <tuple>
+#include <map>
+#include <iostream>
+
+std::tuple<int, double, std::string> getData() {
+    return {42, 3.14, "Hello"};
+}
+
+int main() {
+    // Structured bindings with tuple
+    auto [id, value, message] = getData();
+    std::cout << id << ", " << value << ", " << message << "\n";
+    
+    // With pairs
+    std::map<std::string, int> scores = {{"Alice", 95}, {"Bob", 87}};
+    
+    for (const auto& [name, score] : scores) {
+        std::cout << name << ": " << score << "\n";
+    }
+    
+    return 0;
+}
+```
+
+### std::optional
+Handle optional values safely:
+
+```cpp
+#include <optional>
+#include <iostream>
+#include <string>
+
+std::optional<int> findValue(const std::vector<int>& vec, int target) {
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (vec[i] == target) {
+            return static_cast<int>(i);
+        }
+    }
+    return std::nullopt;
+}
+
+int main() {
+    std::vector<int> numbers = {10, 20, 30, 40, 50};
+    
+    if (auto index = findValue(numbers, 30)) {
+        std::cout << "Found at index: " << *index << "\n";
+    } else {
+        std::cout << "Not found\n";
+    }
+    
+    // Using value_or
+    auto result = findValue(numbers, 99);
+    std::cout << "Index: " << result.value_or(-1) << "\n";
+    
+    return 0;
+}
+```
+
+### std::variant
+Type-safe unions:
+
+```cpp
+#include <variant>
+#include <iostream>
+#include <string>
+
+using Value = std::variant<int, double, std::string>;
+
+void processValue(const Value& v) {
+    std::visit([](const auto& value) {
+        std::cout << "Value: " << value << ", Type: " << typeid(value).name() << "\n";
+    }, v);
+}
+
+int main() {
+    Value v1 = 42;
+    Value v2 = 3.14;
+    Value v3 = std::string("Hello");
+    
+    processValue(v1);
+    processValue(v2);
+    processValue(v3);
+    
+    // Pattern matching with visitor
+    auto visitor = [](const auto& value) -> std::string {
+        if constexpr (std::is_same_v<std::decay_t<decltype(value)>, int>) {
+            return "Integer: " + std::to_string(value);
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(value)>, double>) {
+            return "Double: " + std::to_string(value);
+        } else {
+            return "String: " + value;
+        }
+    };
+    
+    std::cout << std::visit(visitor, v1) << "\n";
+    
+    return 0;
+}
+```
+
+## C++20: The Future is Here
+
+### Concepts
+Type constraints for templates:
+
+```cpp
+#include <concepts>
+#include <iostream>
+
+// Define a concept
+template<typename T>
+concept Numeric = std::integral<T> || std::floating_point<T>;
+
+// Function template with concept constraint
+template<Numeric T>
+T add(T a, T b) {
+    return a + b;
+}
+
+// More complex concept
+template<typename T>
+concept Container = requires(T t) {
+    t.begin();
+    t.end();
+    t.size();
+};
+
+template<Container C>
+void printSize(const C& container) {
+    std::cout << "Size: " << container.size() << "\n";
+}
+
+int main() {
+    std::cout << add(5, 3) << "\n";        // Works with int
+    std::cout << add(2.5, 1.5) << "\n";   // Works with double
+    // add("hello", "world");              // Would not compile
+    
+    std::vector<int> vec = {1, 2, 3, 4, 5};
+    printSize(vec);
+    
+    return 0;
+}
+```
+
+### Ranges
+Functional programming for containers:
+
+```cpp
+#include <ranges>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+int main() {
+    std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    
+    // Filter even numbers, square them, and take first 3
+    auto result = numbers 
+        | std::views::filter([](int n) { return n % 2 == 0; })
+        | std::views::transform([](int n) { return n * n; })
+        | std::views::take(3);
+    
+    for (int value : result) {
+        std::cout << value << " ";
+    }
+    std::cout << "\n";
+    
+    // Lazy evaluation - nothing computed until iteration
+    auto lazy_range = std::views::iota(1, 100)
+        | std::views::filter([](int n) { return n % 7 == 0; })
+        | std::views::transform([](int n) { return n * n; });
+    
+    for (int value : lazy_range | std::views::take(5)) {
+        std::cout << value << " ";
+    }
+    
+    return 0;
+}
+```
+
+### Coroutines
+Simplified asynchronous programming:
+
+```cpp
+#include <coroutine>
+#include <iostream>
+#include <vector>
+
+// Simple generator
+template<typename T>
+struct Generator {
+    struct promise_type {
+        T current_value;
+        
+        Generator get_return_object() {
+            return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        
+        std::suspend_always initial_suspend() { return {}; }
+        std::suspend_always final_suspend() noexcept { return {}; }
+        void unhandled_exception() {}
+        
+        std::suspend_always yield_value(T value) {
+            current_value = value;
+            return {};
+        }
+        
+        void return_void() {}
+    };
+    
+    std::coroutine_handle<promise_type> coro;
+    
+    Generator(std::coroutine_handle<promise_type> h) : coro(h) {}
+    ~Generator() { if (coro) coro.destroy(); }
+    
+    bool next() {
+        coro.resume();
+        return !coro.done();
+    }
+    
+    T value() {
+        return coro.promise().current_value;
+    }
+};
+
+Generator<int> fibonacci() {
+    int a = 0, b = 1;
+    while (true) {
+        co_yield a;
+        auto temp = a;
+        a = b;
+        b = temp + b;
+    }
+}
+
+int main() {
+    auto fib = fibonacci();
+    
+    for (int i = 0; i < 10; ++i) {
+        if (fib.next()) {
+            std::cout << fib.value() << " ";
+        }
+    }
+    
+    return 0;
+}
+```
+
+## C++23: Latest Additions
+
+### std::expected
+Better error handling:
+
+```cpp
+#include <expected>
+#include <string>
+#include <iostream>
+
+enum class ParseError {
+    InvalidFormat,
+    OutOfRange
+};
+
+std::expected<int, ParseError> parseInteger(const std::string& str) {
+    try {
+        int result = std::stoi(str);
+        if (result < 0 || result > 100) {
+            return std::unexpected(ParseError::OutOfRange);
+        }
+        return result;
+    } catch (...) {
+        return std::unexpected(ParseError::InvalidFormat);
+    }
+}
+
+int main() {
+    auto result1 = parseInteger("42");
+    if (result1) {
+        std::cout << "Parsed: " << *result1 << "\n";
+    } else {
+        std::cout << "Parse error occurred\n";
+    }
+    
+    auto result2 = parseInteger("invalid");
+    if (!result2) {
+        switch (result2.error()) {
+            case ParseError::InvalidFormat:
+                std::cout << "Invalid format\n";
+                break;
+            case ParseError::OutOfRange:
+                std::cout << "Out of range\n";
+                break;
+        }
+    }
+    
+    return 0;
+}
+```
+
+## Best Practices for Modern C++
+
+### 1. Prefer RAII and Smart Pointers
+```cpp
+// Good
+auto resource = std::make_unique<Resource>();
+
+// Avoid
+Resource* resource = new Resource(); // Don't forget delete!
+```
+
+### 2. Use const and constexpr
+```cpp
+// Compile-time constants
+constexpr int BUFFER_SIZE = 1024;
+
+// Runtime constants
+const auto config = loadConfiguration();
+```
+
+### 3. Embrace Move Semantics
+```cpp
+class MyClass {
+    std::vector<int> data_;
+    
+public:
+    // Move constructor
+    MyClass(MyClass&& other) noexcept : data_(std::move(other.data_)) {}
+    
+    // Move assignment
+    MyClass& operator=(MyClass&& other) noexcept {
+        if (this != &other) {
+            data_ = std::move(other.data_);
+        }
+        return *this;
+    }
+};
+```
+
+### 4. Use Algorithms and Ranges
+```cpp
+// Instead of manual loops
+std::sort(container.begin(), container.end());
+auto it = std::find_if(container.begin(), container.end(), predicate);
+
+// Or with ranges (C++20)
+std::ranges::sort(container);
+auto it = std::ranges::find_if(container, predicate);
+```
+
+## Performance Considerations
+
+Modern C++ features often provide better performance:
+
+- **Move semantics** reduce unnecessary copies
+- **constexpr** enables compile-time computation
+- **Ranges** provide lazy evaluation
+- **std::optional** avoids exceptions for missing values
+
+## Conclusion
+
+Modern C++ has transformed from a low-level systems language to a powerful, expressive language suitable for various domains. Key takeaways:
+
+- **Safety**: Smart pointers and RAII prevent memory leaks
+- **Expressiveness**: Lambdas and ranges make code more readable
+- **Performance**: Move semantics and constexpr improve efficiency
+- **Correctness**: Concepts and expected improve type safety
+
+Embrace these modern features to write safer, more maintainable, and more efficient C++ code. The language continues to evolve, with new standards bringing even more powerful features.
+
+## Next Steps
+
+- Practice using modern C++ features in your projects
+- Explore the latest C++23 features
+- Learn about performance profiling with modern C++
+- Study design patterns in modern C++
+
+Happy coding with modern C++! 🚀

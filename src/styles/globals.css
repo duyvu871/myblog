@@ -9,10 +9,95 @@
 @import '@mantine/spotlight/styles.css';
 @import '@mantine/dropzone/styles.css';
 
+/* Catppuccin theme variables */
+@import './catppuccin-theme.css';
+
 @import 'tailwindcss';
+@import "@catppuccin/tailwindcss/mocha.css";
 /* Tailwind typography */
-@plugin '@tailwindcss/typography';
+/* @plugin '@tailwindcss/typography'; */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  scroll-behavior: smooth;
+}
+
+:target {
+  scroll-margin-top: 80px; /* offset khi heading có id được focus */
+}
 
 .canvas-background {
   background: radial-gradient(ellipse at 50% 45%, #f4efe6 0%, #e6ebf2 55%, #cfd5dd 100%);
 }
+
+pre {
+  font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+  font-size: 0.875rem;   /* ~14px */
+  line-height: 1.6;
+  background: #0d1117b6 !important;
+  color: #e6edf3;        /* màu mặc định */
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.3rem;
+}
+
+/* Đặt font chữ riêng cho code block */
+.hljs {
+  font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+  font-size: 0.875rem;   /* ~14px */
+  line-height: 1.6;
+  color: #e6edf3;        /* màu mặc định */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+/* Có thể tinh chỉnh theo loại token */
+.hljs-keyword {
+  color: #ff7b72;
+  font-weight: 600;
+}
+
+.hljs-string {
+  color: #a5d6ff;
+}
+
+.hljs-comment {
+  color: #8b949e;
+  font-style: italic;
+}
+
+/* globals.css */
+[data-rehype-pretty-code-fragment] pre { overflow: auto; }
+[data-rehype-pretty-code-fragment] code { display: grid; }
+
+[data-rehype-pretty-code-fragment] .line {
+  white-space: pre;
+  padding: 0 .75rem;
+  border-left: 2px solid transparent;
+}
+
+[data-rehype-pretty-code-fragment] .is-highlighted {
+  background: color-mix(in oklab, var(--app-text) 8%, transparent);
+  border-left-color: color-mix(in oklab, var(--app-text) 25%, transparent);
+}
+
+/* [data-rehype-pretty-code-title] {
+  display:block;
+  padding:.4rem .75rem;
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  opacity:.8;
+  background: var(--app-card);
+  border: 1px solid var(--app-border);
+  border-bottom: none;
+} */
+
+.prose :where(pre):not(:where([class~="not-prose"] *)) code {
+  display:grid; 
+  padding:0; 
+  background:none;
+}
+
+
