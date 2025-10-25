@@ -31,7 +31,7 @@ export function ScrollToTop({
   };
 
   const positionClasses = {
-    'bottom-right': 'fixed bottom-6 right-6 z-50',
+    'bottom-right': 'fixed bottom-22 right-6 z-50',
     'bottom-left': 'fixed bottom-6 left-6 z-50',
     'top-right': 'fixed top-6 right-6 z-50',
     'top-left': 'fixed top-6 left-6 z-50',

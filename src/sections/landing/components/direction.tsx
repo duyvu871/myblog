@@ -8,6 +8,7 @@ import {
   IconTags,
   IconUser,
   IconCode,
+  IconBriefcase,
   IconBrandGithub,
 } from '@tabler/icons-react';
 
@@ -26,6 +27,18 @@ const dockItems: DockItem[] = [
     sectionId: 'hero',
   },
   {
+    id: 'about',
+    icon: <IconUser size={20} />,
+    label: 'About',
+    sectionId: 'about',
+  },
+  {
+    id: 'experience',
+    icon: <IconBriefcase size={20} />,
+    label: 'Experience',
+    sectionId: 'experience',
+  },
+  {
     id: 'featured-posts',
     icon: <IconBook size={20} />,
     label: 'Latest Notes',
@@ -36,12 +49,6 @@ const dockItems: DockItem[] = [
     icon: <IconTags size={20} />,
     label: 'Topics',
     sectionId: 'categories',
-  },
-  {
-    id: 'about',
-    icon: <IconUser size={20} />,
-    label: 'About',
-    sectionId: 'about',
   },
   {
     id: 'tech-stack',

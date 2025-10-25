@@ -3,6 +3,7 @@ import { HeroSection } from '../components/hero-section';
 import { FeaturedPostsSection } from '../components/featured-posts-section';
 import { CategoriesSection } from '../components/categories-section';
 import { AboutSection } from '../components/about-section';
+import { ExperienceSection } from '../components/experience-section';
 import { TechStackSection } from '../components/tech-stack-section';
 import { NewsletterSection } from '../components/newsletter-section';
 import { FooterSection } from '../components/footer-section';
@@ -27,9 +28,10 @@ export default async function LandingPageView() {
   return (
     <div>
       <HeroSection posts={posts} allTags={allTags} />
+      <AboutSection />
+      <ExperienceSection />
       <FeaturedPostsSection featuredPosts={featuredPosts} />
       <CategoriesSection categories={categories} posts={posts} />
-      <AboutSection />
       <TechStackSection />
       <NewsletterSection />
       <FooterSection />
