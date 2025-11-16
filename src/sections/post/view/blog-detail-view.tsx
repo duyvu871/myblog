@@ -37,7 +37,7 @@ export default async function BlogDetailView({ slug }: BlogDetailViewProps) {
 
   return (
     <>
-      <Container size="sm" py="xl" px="0">
+      <Container size="sm" py="xl" my="xl" px="0">
         {/* Breadcrumbs Navigation */}
         <Breadcrumbs mb="md" pl="xl" className="flex-nowrap">
           {breadcrumbItems.map((item, index) => (

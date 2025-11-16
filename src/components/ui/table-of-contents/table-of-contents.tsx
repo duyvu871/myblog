@@ -66,7 +66,7 @@ export function Toc({ headings }: TocProps) {
         />
       )}
 
-      <div className="fixed right-6 bottom-20 z-50">
+      <div className="fixed top-20 right-6 z-50">
         <Menu
           opened={opened}
           onChange={setOpened}

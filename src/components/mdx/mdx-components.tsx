@@ -1,6 +1,6 @@
 import type { MDXComponents } from 'mdx/types';
 import Link from 'next/link';
-import Image from 'next/image';
+// import Image from 'next/image';
 import { ComponentProps } from 'react';
 import { cn } from 'app/lib/cn';
 import {
@@ -16,6 +16,7 @@ import {
   TableTd,
   Divider,
   Blockquote,
+  Image,
   Paper,
 } from '@mantine/core';
 import { IconHeart, IconStar, IconCode, IconRocket, IconQuote } from '@tabler/icons-react';
@@ -109,7 +110,7 @@ export function MDXComponents(components: MDXComponents): MDXComponents {
         component="p"
         size="md"
         c={'subtext1'}
-        className={cn('not-prose mb-4 leading-7 [&:not(:first-child)]:mt-6', className)}
+        className={cn('not-prose !mb-6 leading-7 [&:not(:first-child)]:mt-6', className)}
         {...props}
       />
     ),
@@ -117,11 +118,11 @@ export function MDXComponents(components: MDXComponents): MDXComponents {
     // Customize anchor links with Mantine Anchor
     a: ({ className, children, ...props }: AnchorProps) =>
       className?.includes('heading-anchor') ? (
-        <a className={className} {...props}>
+        <a className={cn(className, 'break-words')} {...props}>
           {children}
         </a>
       ) : (
-        <Anchor className={className} {...props}>
+        <Anchor className={cn(className, 'break-words')} {...props}>
           {children}
         </Anchor>
       ),
@@ -221,7 +222,7 @@ export function MDXComponents(components: MDXComponents): MDXComponents {
         variant="filled"
         radius="xl"
         iconSize={30}
-        className={className}
+        className={cn(className, 'break-words')}
         {...props}
       />
     ),
@@ -293,6 +294,7 @@ export function MDXComponents(components: MDXComponents): MDXComponents {
     // Horizontal rule with Mantine Divider
     hr: ({ className, ...props }: HrProps) => <Divider my="xl" className={className} {...props} />,
 
+    img: (props: ImageProps) => <Image {...props} className={cn(props.className, 'my-5')} />,
     // Custom components can be added here
     // For example, you can add custom components like:
     // CustomComponent: ({ children }) => <div className="custom">{children}</div>,

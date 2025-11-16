@@ -47,23 +47,23 @@ const socialLinks = [
     label: 'GitHub',
     href: 'https://github.com/duyvu871',
     icon: IconBrandGithub,
-    color: 'gray',
-  },
-  {
-    label: 'Twitter',
-    href: 'https://twitter.com/yourusername',
-    icon: IconBrandTwitter,
     color: 'blue',
   },
+  // {
+  //   label: 'Twitter',
+  //   href: 'https://twitter.com/yourusername',
+  //   icon: IconBrandTwitter,
+  //   color: 'blue',
+  // },
   {
     label: 'LinkedIn',
-    href: 'https://linkedin.com/in/yourusername',
+    href: 'https://linkedin.com/in/du-b%C3%B9i-an-b20728308/',
     icon: IconBrandLinkedin,
     color: 'blue',
   },
   {
     label: 'Facebook',
-    href: 'https://facebook.com/yourusername',
+    href: 'https://facebook.com/du.bui.380683/',
     icon: IconBrandFacebook,
     color: 'blue',
   },
@@ -101,7 +101,7 @@ export default function Footer() {
         marginTop: 'auto',
       }}
     >
-      <Container size="xl" py="xl">
+      <Container size="xl" className="my-5 !p-5 md:m-10 md:p-10">
         <Grid>
           {/* Brand and Description */}
           <GridCol span={{ base: 12, md: 4 }}>

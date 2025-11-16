@@ -1,0 +1,223 @@
+---
+title: "SQL Cơ Bản #1: Tìm Hiểu về Cơ Sở Dữ Liệu Quan Hệ"
+description: "Hướng dẫn toàn diện cho người bắt đầu về cơ sở dữ liệu quan hệ, SQL, và cách thức hoạt động của chúng"
+date: "2025-01-21"
+author: "Bui An Du"
+tags: ["sql", "database", "relational-database", "rdbms", "foundation"]
+published: true
+thumbnail: "/images/sql-foundation-thumbnail.png"
+---
+
+
+# SQL Cơ Bản #1: Tìm Hiểu về Cơ Sở Dữ Liệu Quan Hệ
+
+Mình viết bài này chủ yếu để tự ôn lại kiến thức nền tảng về cơ sở dữ liệu quan hệ. Dù khá tự tin về lý thuyết, nhưng khi bị hỏi về project báo cáo môn Python, mình vẫn trả lời ngáo ngơ, chưa tốt. Viết blog cũng là cách để mình hệ thống lại mọi thứ cho bản thân, nếu ai đọc được thì càng vui.
+
+## Cơ Sở Dữ Liệu Quan Hệ là gì?
+
+Nói ngắn gọn, cơ sở dữ liệu quan hệ là hệ thống lưu trữ dữ liệu dưới dạng các bảng (table) gồm hàng và cột. Nó giống như file Excel, nhưng mạnh hơn rất nhiều và có thể truy vấn bằng ngôn ngữ SQL.
+
+Mỗi bảng lưu thông tin về một loại đối tượng, các bảng liên kết với nhau qua các khóa (key).
+
+### Ví dụ thực tế: Quản lý cửa hàng sách
+
+Giả sử mình có một cửa hàng bán sách. Ban đầu, mọi thứ ghi ra giấy, đến lúc cần tìm "ai đã mua quyển X" thì loay hoay mãi không ra. Sau này, chuyển sang lưu bằng cơ sở dữ liệu, mọi thứ rõ ràng hơn hẳn:
+
+```
+Bảng Sách:
+| ID | Tên Sách        | Tác Giả       | Giá   |
+|----|-----------------|---------------|-------|
+| 1  | Lập trình Python| Nguyễn Văn A  | 150k  |
+| 2  | SQL Dễ Hiểu     | Trần Thị B    | 120k  |
+| 3  | Web Dev Basics  | Phạm Văn C    | 180k  |
+
+Bảng Khách Hàng:
+| ID | Tên              | Email          | Địa Chỉ    |
+|----|------------------|----------------|------------|
+| 1  | Lê Minh Khánh    | minh@email.com | Hà Nội    |
+| 2  | Hoàng Thị Lan    | lan@email.com  | TP HCM    |
+| 3  | Võ Quốc Huy      | huy@email.com  | Đà Nẵng   |
+
+
+Bảng Đơn Hàng:
+| ID | Khách Hàng ID | Sách ID | Ngày Mua   |
+|----|---------------|---------|------------|
+| 1  | 1             | 1       | 2025-01-15 |
+| 2  | 2             | 2       | 2025-01-16 |
+| 3  | 1             | 3       | 2025-01-17 |
+```
+
+Ba bảng này liên kết với nhau qua các trường ID. Nhờ vậy, mình có thể dễ dàng truy vấn xem khách nào đã mua sách nào, vào ngày nào.
+
+## Đặc Điểm Quan Trọng của Cơ Sở Dữ Liệu Quan Hệ
+
+### 1. Dữ liệu Có Cấu Trúc
+Dữ liệu được tổ chức thành các bảng với cột (fields) và hàng (records) rõ ràng. Điều này giúp dễ dàng tìm kiếm, sửa đổi và quản lý dữ liệu. (Không phải tìm kiếm kiểu vét sạch trong dữ liệu đống dữ liệu đó)
+
+### 2. Sử Dụng SQL để Truy Vấn - Ngôn ngữ của database
+SQL (Structured Query Language) là ngôn ngữ tiêu chuẩn để làm việc với cơ sở dữ liệu quan hệ. Bạn dùng SQL để lấy dữ liệu, thêm dữ liệu, cập nhật hoặc xóa dữ liệu. Nó như tiếng Anh của database.
+
+```sql
+-- Ví dụ: Lấy tất cả sách có giá dưới 150k (nghèo như tôi 😭)
+SELECT * FROM Sach WHERE Gia < 150000;
+
+-- Ví dụ: Tìm đơn hàng của khách hàng có ID = 1
+SELECT * FROM DonHang WHERE KhachHang_ID = 1;
+```
+
+### 3. ACID Transactions (Giao Dịch An Toàn)
+
+![(ACID Transactions](/images/ACID-Transactions.png)
+
+ACID là bốn tính chất đảm bảo dữ liệu luôn đúng và an toàn. Nếu không có ACID, có thể tiền bạn sẽ "bốc hơi" giữa chừng.
+
+- **Atomicity (Tính Nguyên Tử)**: Một giao dịch hoặc thành công hoàn toàn, hoặc thất bại hoàn toàn. Không có trạng thái "nửa vời" (kiểu như "chuyển tiền rồi nhưng tiền chưa được chuyển mà vẫn báo thành công ấy" 😅)
+
+- **Consistency (Tính Nhất Quán)**: đảm bảo dữ liệu luôn tuân theo các quy tắc mà bạn đã định sẵn. Bất kỳ giao dịch nào vi phạm các quy tắc này (ví dụ: cố gắng rút tiền nhiều hơn số dư) sẽ bị chặn, giữ cho dữ liệu luôn hợp lệ.
+
+- **Isolation (Tính Cách Ly)**: đảm bảo rằng nhiều giao dịch chạy cùng lúc sẽ không can thiệp hay "dẫm chân" lên nhau. Mỗi giao dịch sẽ chạy như thể nó đang ở một mình.
+
+    **Ví dụ:** Bạn và một người khác cùng lúc đặt chiếc vé xem phim cuối cùng. Tính cô lập sẽ "khóa" chiếc vé đó lại cho người đầu tiên nhấn thanh toán. Người thứ hai sẽ ngay lập tức thấy vé đã hết, chứ không xảy ra chuyện cả hai cùng trả tiền và cùng nhận được một vé.
+- **Durability (Tính Bền Vững)**: Dữ liệu được lưu trữ an toàn và không mất ngay cả khi có sự cố. Cắt điện, máy chủ cháy, gì cũng không sợ. Dữ liệu vẫn còn nguyên vẹn.
+
+**Ví dụ Thực Tế**: Khi bạn chuyển tiền qua ngân hàng, nó phải là giao dịch ACID hoàn hảo. Tiền rút từ tài khoản A và gửi vào tài khoản B phải xảy ra cùng lúc. Nếu máy chủ ngân hàng bị sập giữa chừng, tiền sẽ được "rollback" (lùi lại). Không thể mất tiền. Đó là magic của ACID
+
+### 4. Ràng Buộc Dữ Liệu (Constraints) - Bảo Vệ Dữ Liệu Khỏi Người Ngu
+
+Cơ sở dữ liệu quan hệ có cơ chế để đảm bảo dữ liệu luôn đúng. Nó như một "cảnh sát" nhỏ xinh bảo vệ dữ liệu khỏi những sai lầm ngu ngốc:
+
+- **Primary Key (Khóa Chính)**: Mỗi hàng có một định danh duy nhất. Giống như số CCCD của mỗi người - không thể có hai người cùng một ID
+- **Foreign Key (Khóa Ngoại)**: Liên kết giữa các bảng. Không cho bạn tạo đơn hàng cho khách hàng "ghost" không tồn tại
+- **Unique**: Không cho phép giá trị trùng lặp
+- **Not Null**: Bắt buộc phải có giá trị
+
+```sql
+CREATE TABLE Sach (
+    ID INT PRIMARY KEY,           -- ID phải duy nhất
+    TenSach VARCHAR(100) NOT NULL, -- Tên sách bắt buộc phải có
+    TacGia VARCHAR(100),
+    Gia DECIMAL(10,2)
+);
+
+CREATE TABLE DonHang (
+    ID INT PRIMARY KEY,
+    KhachHang_ID INT NOT NULL,
+    Sach_ID INT NOT NULL,
+    NgayMua DATE,
+    FOREIGN KEY (KhachHang_ID) REFERENCES KhachHang(ID),
+    FOREIGN KEY (Sach_ID) REFERENCES Sach(ID)
+);
+```
+
+
+## Một số điểm mình thích ở cơ sở dữ liệu quan hệ
+
+- Dữ liệu có cấu trúc rõ ràng, dễ tổ chức, tìm kiếm, thao tác. Không phải lục tung mọi thứ lên để tìm một thông tin nhỏ.
+- Độ an toàn và tin cậy cao nhờ các tính chất ACID. Đây là lý do các hệ thống ngân hàng, bệnh viện đều dùng loại này. Nếu từng gặp lỗi mất dữ liệu, sẽ thấy ACID quý như vàng.
+- Giảm lặp lại dữ liệu nhờ chuẩn hóa. Thay vì lưu địa chỉ khách hàng lặp đi lặp lại ở nhiều nơi, chỉ cần lưu một lần ở bảng khách hàng, các bảng khác chỉ cần tham chiếu ID.
+- Truy vấn linh hoạt, có thể kết hợp nhiều bảng, lọc, sắp xếp đủ kiểu. SQL rất mạnh, nhiều lúc chỉ cần một câu là ra đúng thứ mình cần.
+- Bảo mật tốt, kiểm soát được ai được xem, ai được sửa, có thể mã hóa dữ liệu nhạy cảm.
+- Hỗ trợ nhiều người dùng cùng lúc mà không lo xung đột dữ liệu.
+
+```sql
+-- Truy vấn phức tạp: Lấy tên khách hàng và danh sách sách họ đã mua
+SELECT 
+    k.TenKhach,
+    s.TenSach,
+    d.NgayMua
+FROM KhachHang k
+JOIN DonHang d ON k.ID = d.KhachHang_ID
+JOIN Sach s ON d.Sach_ID = s.ID
+WHERE d.NgayMua > '2025-01-01'
+ORDER BY d.NgayMua DESC;
+```
+
+
+## Một số điểm mình không thích hoặc thấy bất tiện
+
+- Thiết kế ban đầu khá mất công, phải nghĩ kỹ về cấu trúc bảng, các mối quan hệ, ràng buộc. Nếu không cẩn thận thì sau này sửa rất mệt.
+- Một số hệ quản trị cơ sở dữ liệu quan hệ chuyên nghiệp (như Oracle) rất đắt, cần máy chủ mạnh, người quản trị giỏi. May mà có PostgreSQL, MySQL miễn phí.
+- Schema cố định, muốn thay đổi cấu trúc bảng khi đã có nhiều dữ liệu thì khá phức tạp, đôi khi phải dừng hệ thống để cập nhật.
+- Không phù hợp cho dữ liệu không có cấu trúc (ảnh, video, log cảm biến, v.v.).
+- Khi dữ liệu quá lớn, horizontal scale (thêm nhiều máy chủ) khó hơn NoSQL thường chỉ vertical scale (nâng cấp máy chủ).
+Sau khi thiết kế các bảng, nếu muốn thêm cột hoặc thay đổi cấu trúc, có thể rất phức tạp và cần downtime (website bị down mà bạn không có tiền sửa = áp lực). Điều này kém linh hoạt khi yêu cầu thay đổi thường xuyên (bản thân mình cũng từng dính phải không ít lần phải migrate dữ liệu nhiều lần do đổi requirement nên cũng hiểu vấn đề này).
+
+```sql
+-- Thêm cột mới vào bảng có dữ liệu lớn có thể mất HÀNG GIỜ
+ALTER TABLE Sach ADD COLUMN NamXuatBan INT;
+```
+
+### ✗ Không Tốt cho Dữ Liệu Không Có Cấu Trúc - SQL Bó Tay
+Cơ sở dữ liệu quan hệ không phù hợp để lưu trữ:
+- Ảnh, video, âm thanh (tệp to quá)
+- Bài đăng mạng xã hội (text không chuẩn hóa, lâm lộn)
+- Dữ liệu từ cảm biến IoT (quá nhiều, quá nhanh)
+
+Những loại dữ liệu này tốt hơn nên dùng NoSQL (MongoDB, Firebase, v.v.)
+
+### ✗ Khó Mở Rộng Ngang  (horizontal scale)
+Khi dữ liệu quá lớn, đúng là mở rộng cơ sở dữ liệu quan hệ theo cách truyền thống (clustering) rất khó, và việc chỉ mở rộng dọc (vertical scaling) thì quá tốn kém và sớm đạt tới giới hạn.
+
+Vì lý do này, Facebook và YouTube không bỏ SQL. Thay vào đó, họ đã đầu tư nguồn lực khổng lồ để tự phát triển các công nghệ (như Vitess và TAO) để break giới hạn đó, cho phép họ mở rộng MySQL theo chiều ngang trên hàng ngàn máy chủ.
+
+> Youtube: https://www.usenix.org/conference/lisa12/vitess-scaling-mysql-youtube-using-go
+>
+> Facebook: https://engineering.fb.com/2013/06/25/core-infra/tao-the-power-of-the-graph
+
+## SQL vs NoSQL - So Sánh Nhanh
+
+![nosql-vs-sql](/images/nosql-vs-sql.png)
+
+| Tiêu Chí | SQL (Quan Hệ) | NoSQL (Không Quan Hệ) |
+|----------|---------------|----------------------|
+| **Cấu Trúc** | Bảng, hàng, cột | Tài liệu, key-value, đồ thị |
+| **Schema** | Cố định, cần định nghĩa trước | Linh hoạt, có thể thay đổi |
+| **ACID** | Có (luôn) | Có/Không (tùy loại) |
+| **Truy Vấn** | SQL chuẩn | Các ngôn ngữ khác nhau |
+| **Mở Rộng** | Dọc (Vertical) | Ngang (Horizontal) |
+| **Ví Dụ** | MySQL, PostgreSQL, Oracle | MongoDB, Cassandra, Redis |
+| **Dùng Khi** | Dữ liệu có cấu trúc rõ | Dữ liệu lớn, không chuẩn hóa |
+
+
+## Một số hệ quản trị cơ sở dữ liệu quan hệ phổ biến
+
+1. **MySQL**: Miễn phí, phổ biến, dễ dùng, rất hợp với các dự án web nhỏ và vừa.
+    ![mysql](/images/mysql-logo.png)
+2. **PostgreSQL**: Mạnh, miễn phí, nhiều tính năng nâng cao, phù hợp cho ứng dụng phức tạp.
+    ![postgresql](/images/postgresql-logo.png)
+3. **Oracle Database**: Mạnh, chuyên nghiệp, nhưng chi phí cao, thường dùng cho doanh nghiệp lớn.
+    ![oracle-database](/images/oracle-database-logo.png)
+4. **Microsoft SQL Server**: Tích hợp tốt với hệ sinh thái Microsoft, phù hợp cho doanh nghiệp dùng Windows.
+    ![Microsoft-sql](/images/microsoftsql-logo.png)
+
+## So sánh nhanh MySQL và PostgreSQL
+
+Hai hệ này đều miễn phí, mã nguồn mở, rất phổ biến và đều dùng SQL chuẩn, nhưng có một số điểm khác biệt thực tế:
+
+- **MySQL** thường được chọn cho các dự án web nhỏ, vừa, hoặc các hệ thống cần tốc độ truy vấn đơn giản, dễ triển khai, cộng đồng lớn. MySQL xử lý tốt các tác vụ đọc nhiều, nhưng một số tính năng nâng cao (như kiểm tra toàn vẹn dữ liệu, truy vấn phức tạp, JSON, v.v.) thì không mạnh bằng PostgreSQL.
+- **PostgreSQL** mạnh về các tính năng nâng cao, hỗ trợ tốt cho dữ liệu phức tạp, truy vấn phức tạp, kiểm tra ràng buộc dữ liệu, mở rộng, và có thể dùng cho các hệ thống lớn, cần tính toàn vẹn dữ liệu cao. PostgreSQL cũng hỗ trợ nhiều kiểu dữ liệu hơn, và thường được chọn cho các dự án cần custom logic phức tạp.
+
+https://www.digitalocean.com/community/tutorials/sqlite-vs-mysql-vs-postgresql-a-comparison-of-relational-database-management-systems
+
+
+## Tổng kết
+
+Theo mình, cơ sở dữ liệu quan hệ là nền tảng rất quan trọng nếu làm backend hoặc quản lý dữ liệu nghiêm túc. Nó an toàn, tin cậy, dễ kiểm soát, nhưng cũng có những điểm bất tiện như đã nói ở trên. Viết lại bài này cũng là dịp để mình nhìn lại những gì đã học, và nhận ra vẫn còn nhiều thứ cần đào sâu hơn.
+
+Nếu bạn cũng từng tự tin về lý thuyết nhưng trả lời vấn đáp chưa tốt, thì việc hệ thống lại kiến thức như thế này rất hữu ích.
+
+Tóm lại, nếu chỉ cần đơn giản, dễ dùng, tốc độ tốt thì MySQL là lựa chọn ổn. Nếu muốn mở rộng, kiểm soát dữ liệu chặt, hoặc làm các hệ thống lớn, nên cân nhắc PostgreSQL.
+
+Một điều mình thấy khá thú vị là hầu hết các hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) đều có rất nhiều điểm chung. Có lẽ vì các kỹ sư thiết kế các hệ này đều học hỏi, tham khảo lẫn nhau nên về cơ bản, các RDBMS phổ biến giống nhau đến 80%. Nói không ngoa, nếu đã quen một hệ, thì phần lớn kiến thức có thể áp dụng cho các hệ còn lại, chỉ cần để ý một số khác biệt nhỏ về cú pháp hoặc tính năng nâng cao.
+
+Ở bài tiếp theo, mình sẽ thử tổng hợp lại các lệnh SQL cơ bản (SELECT, INSERT, UPDATE, DELETE), cách viết truy vấn đơn giản và kết nối các bảng (JOIN).
+
+## Nguồn tham khảo
+
+- [SQLBolt – Learn SQL with simple, interactive exercises](https://sqlbolt.com/)
+- [w3schools SQL Tutorial](https://www.w3schools.com/sql/)
+- [PostgreSQL Official Documentation](https://www.postgresql.org/docs/)
+- [MySQL Official Documentation](https://dev.mysql.com/doc/)
+- [Wikipedia: Relational database](https://en.wikipedia.org/wiki/Relational_database)
+
+Hẹn gặp lại ở bài sau.
