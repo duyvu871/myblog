@@ -1,0 +1,748 @@
+---
+title: "SQL Cơ Bản #2: Các Lệnh Cơ Bản và Truy Vấn Đơn Giản"
+description: "Tổng hợp các lệnh SQL cơ bản (SELECT, INSERT, UPDATE, DELETE), cách viết truy vấn đơn giản và kết nối các bảng (JOIN) với ví dụ thực tế"
+date: "2025-01-22"
+author: "Bui An Du"
+tags: ["sql", "database", "queries", "crud", "join"]
+published: true
+thumbnail: "/images/sql-foundation-2-thumbnail.png"
+---
+
+# SQL Cơ Bản #2: Các Lệnh Cơ Bản và Truy Vấn Đơn Giản
+
+Sau bài đầu về cơ sở dữ liệu quan hệ, mình tiếp tục ôn lại các lệnh SQL cơ bản. Dù đã biết lý thuyết, nhưng khi thực hành hoặc bị hỏi, mình vẫn hay quên cú pháp hoặc nhầm lẫn. Viết bài này cũng là dịp để mình ghi nhớ kỹ hơn, nếu bạn cũng đang học SQL thì có thể tham khảo.
+
+Mục tiêu của mình là viết sao cho dễ nuốt nhất có thể. Có chỗ mình sẽ chèn chút ví dụ đời thường, chỗ khác có vài câu vui vui để đỡ căng não. Mình từng vật lộn với JOIN cả tuần, nên nếu bạn thấy nó rối như mớ mì Ý, yên tâm: ai cũng từng như vậy.
+
+***Lưu ý:** Trong bài này mình minh họa chủ yếu bằng PostgreSQL. Một số cú pháp có thể khác nhẹ so với MySQL (ví dụ SERIAL, DELETE ... USING, FULL OUTER JOIN).*
+
+## Sample Schema: Cửa Hàng Sách
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/ddl-basics.html](https://www.postgresql.org/docs/current/ddl-basics.html))*
+
+Mình sẽ dùng lại ví dụ cửa hàng sách từ bài trước để dễ hình dung. Dưới đây là SQL để tạo các bảng và chèn dữ liệu mẫu:
+
+```sql
+-- Tạo bảng Sach
+CREATE TABLE Sach (
+    ID SERIAL PRIMARY KEY,
+    TenSach VARCHAR(100) NOT NULL,
+    TacGia VARCHAR(100),
+    Gia DECIMAL(10,2),
+    TonKho INT
+);
+ 
+-- Tạo bảng KhachHang
+CREATE TABLE KhachHang (
+    ID SERIAL PRIMARY KEY,
+    Ten VARCHAR(100) NOT NULL,
+    Email VARCHAR(100),
+    DiaChi VARCHAR(100)
+);
+ 
+-- Tạo bảng DonHang
+CREATE TABLE DonHang (
+    ID SERIAL PRIMARY KEY,
+    KhachHang_ID INT,
+    Sach_ID INT,
+    NgayMua DATE,
+    SoLuong INT,
+    FOREIGN KEY (KhachHang_ID) REFERENCES KhachHang(ID),
+    FOREIGN KEY (Sach_ID) REFERENCES Sach(ID)
+);
+ 
+-- Chèn dữ liệu mẫu
+INSERT INTO Sach VALUES
+(1, 'Lập trình Python', 'Nguyễn Văn A', 150000, 50),
+(2, 'SQL Dễ Hiểu', 'Trần Thị B', 120000, 5),
+(3, 'Web Dev Basics', 'Phạm Văn C', 180000, 200);
+ 
+INSERT INTO KhachHang VALUES
+(1, 'Lê Minh Khánh', 'minh@email.com', 'Hà Nội'),
+(2, 'Hoàng Thị Lan', 'lan@email.com', 'TP HCM'),
+(3, 'Võ Quốc Huy', 'huy@email.com', 'Đà Nẵng');
+ 
+INSERT INTO DonHang VALUES
+(1, 1, 1, '2025-01-15', 1),
+(2, 2, 2, '2025-01-16', 2),
+(3, 1, 3, '2025-01-17', 1);
+```
+
+## Các Khái Niệm Cơ Bản Trong SQL
+
+> Mẹo thực tế: Trong schema trên, mình dùng `SERIAL` cho khóa chính ở PostgreSQL để tự tăng ID cho đỡ phải nghĩ. Giá tiền dùng `DECIMAL(10,2)` để tránh lỗi làm tròn. Những thứ nhỏ nhỏ này về sau tiết kiệm kha khá thời gian debug.
+
+Trước khi đi sâu vào các lệnh, mình muốn ôn lại một số khái niệm nền tảng mà ai học SQL cũng cần biết. Những thứ này tưởng chừng đơn giản nhưng rất quan trọng.
+
+### SQL Keywords (Từ Khóa)
+
+*(Tham khảo thêm: [https://www.w3schools.com/sql/sql_syntax.asp](https://www.w3schools.com/sql/sql_syntax.asp))*
+
+SQL có hàng trăm keyword, nhưng mình sẽ liệt kê những cái dùng thường xuyên nhất:
+
+**DDL (Data Definition Language) - Định nghĩa dữ liệu:**
+- `CREATE` - Tạo bảng, database, index...
+- `ALTER` - Thay đổi cấu trúc bảng
+- `DROP` - Xóa bảng, database, index...
+- `TRUNCATE` - Xóa tất cả dữ liệu trong bảng (nhanh hơn DELETE)
+
+**DML (Data Manipulation Language) - Thao tác dữ liệu:**
+- `SELECT` - Lấy dữ liệu
+- `INSERT` - Thêm dữ liệu
+- `UPDATE` - Cập nhật dữ liệu
+- `DELETE` - Xóa dữ liệu
+
+**DCL (Data Control Language) - Kiểm soát truy cập:**
+- `GRANT` - Cấp quyền
+- `REVOKE` - Thu hồi quyền
+
+**TCL (Transaction Control Language) - Kiểm soát giao dịch:**
+- `COMMIT` - Lưu thay đổi
+- `ROLLBACK` - Hoàn tác thay đổi
+- `SAVEPOINT` - Điểm lưu tạm thời
+
+**Các từ khóa khác:**
+- `WHERE` - Điều kiện lọc
+- `ORDER BY` - Sắp xếp
+- `GROUP BY` - Nhóm dữ liệu
+- `HAVING` - Điều kiện cho nhóm
+- `JOIN` - Kết nối bảng
+- `UNION` - Ghép kết quả
+- `DISTINCT` - Loại bỏ trùng lặp
+- `AS` - Đặt alias
+- `LIMIT` - Giới hạn kết quả
+
+> Các từ khóa SQL không phân biệt hoa thường, nhưng theo quy ước thường viết hoa để dễ đọc. Ví dụ `SELECT` và `select` đều hợp lệ.
+
+### Data Types (Kiểu Dữ Liệu)
+
+*(Tham khảo thêm: [https://dev.mysql.com/doc/refman/8.0/en/data-types.html](https://dev.mysql.com/doc/refman/8.0/en/data-types.html))*
+
+SQL có nhiều kiểu dữ liệu khác nhau tùy theo hệ quản trị. Mình sẽ nói về những kiểu phổ biến nhất:
+
+**Kiểu số:**
+- `INT` hoặc `INTEGER` - Số nguyên (ví dụ: 42)
+- `BIGINT` - Số nguyên lớn (ví dụ: 9223372036854775807)
+- `DECIMAL(p,s)` hoặc `NUMERIC(p,s)` - Số thập phân chính xác (p: tổng chữ số, s: chữ số sau dấu phẩy)
+- `FLOAT` hoặc `REAL` - Số thực dấu phẩy động
+
+**Kiểu chuỗi:**
+- `CHAR(n)` - Chuỗi có độ dài cố định n ký tự
+- `VARCHAR(n)` - Chuỗi có độ dài tối đa n ký tự
+- `TEXT` - Chuỗi dài không giới hạn
+
+**Kiểu ngày giờ:**
+- `DATE` - Chỉ ngày (YYYY-MM-DD)
+- `TIME` - Chỉ giờ (HH:MM:SS)
+- `DATETIME` hoặc `TIMESTAMP` - Ngày và giờ
+- `YEAR` - Chỉ năm
+
+**Kiểu logic:**
+- `BOOLEAN` hoặc `BOOL` - True/False
+
+**Kiểu nhị phân:**
+- `BLOB` - Dữ liệu nhị phân lớn
+- `JSON` - Dữ liệu JSON (trong PostgreSQL, MySQL 5.7+)
+
+> Chọn kiểu dữ liệu phù hợp rất quan trọng. `VARCHAR(100)` cho tên người thì hợp lý, nhưng cho nội dung bài viết thì nên dùng `TEXT`. Sử dụng DECIMAL cho tiền tệ để tránh lỗi làm tròn.
+
+Ví dụ trong schema của mình:
+- `ID SERIAL PRIMARY KEY` - ID tự tăng (PostgreSQL)
+- `TenSach VARCHAR(100)` - Tên sách tối đa 100 ký tự
+- `Gia DECIMAL(10,2)` - Giá tiền với 2 chữ số thập phân
+- `NgayMua DATE` - Ngày mua hàng
+
+### Operators (Toán Tử)
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/functions-comparison.html](https://www.postgresql.org/docs/current/functions-comparison.html))*
+
+SQL có nhiều loại toán tử để so sánh, tính toán, và kết hợp điều kiện:
+
+**Toán tử so sánh:**
+- `=` - Bằng
+- `!=` hoặc `<>` - Khác
+- `<` - Nhỏ hơn
+- `>` - Lớn hơn
+- `<=` - Nhỏ hơn hoặc bằng
+- `>=` - Lớn hơn hoặc bằng
+
+**Toán tử logic:**
+- `AND` - Và (cả hai điều kiện phải đúng)
+- `OR` - Hoặc (ít nhất một điều kiện đúng)
+- `NOT` - Phủ định (điều kiện ngược lại)
+
+**Toán tử đặc biệt:**
+- `IS NULL` - Kiểm tra giá trị NULL
+- `IS NOT NULL` - Kiểm tra không NULL
+- `LIKE` - So khớp pattern (dùng với % và _)
+- `IN` - Kiểm tra trong danh sách
+- `BETWEEN` - Kiểm tra trong khoảng
+- `EXISTS` - Kiểm tra tồn tại subquery
+
+**Toán tử số học:**
+- `+` - Cộng
+- `-` - Trừ
+- `*` - Nhân
+- `/` - Chia
+- `%` - Chia lấy dư
+
+> Thứ tự ưu tiên: số học > so sánh > logic. Dùng ngoặc đơn () để thay đổi thứ tự. Ví dụ: `WHERE Gia > 100000 AND (TonKho < 10 OR TonKho > 100)`
+
+Ví dụ thực tế:
+
+```sql
+-- Tìm sách giá từ 100k-200k và còn hàng
+SELECT * FROM Sach 
+WHERE Gia BETWEEN 100000 AND 200000 
+AND TonKho > 0;
+
+-- Tìm sách của tác giả bắt đầu bằng "Nguyễn"
+SELECT * FROM Sach 
+WHERE TacGia LIKE 'Nguyễn%';
+
+-- Tìm sách giá rẻ (<150k) hoặc hết hàng (=0)
+SELECT * FROM Sach 
+WHERE Gia < 150000 OR TonKho = 0;
+```
+
+| ID | TenSach          | TacGia       | Gia    | TonKho |
+|----|------------------|--------------|--------|--------|
+| 1  | Lập trình Python| Nguyễn Văn A | 150000 | 50     |
+| 2  | SQL Dễ Hiểu     | Trần Thị B   | 120000 | 5      |
+
+## Lệnh SELECT: Lấy Dữ Liệu
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/sql-select.html](https://www.postgresql.org/docs/current/sql-select.html))*
+
+> Mẹo nhanh SELECT (checklist 10 giây):
+> - Chọn cột đúng chưa? (đừng lạm dụng `*` trong production)
+> - Lọc bằng WHERE đã chuẩn chưa? Có cần `IS NULL` thay vì `= NULL` không?
+> - Cần sắp xếp/giới hạn kết quả không? (`ORDER BY`, `LIMIT`)
+> - Nếu JOIN nhiều bảng, hãy SELECT thử trước khi thêm GROUP BY/HAVING.
+
+SELECT là lệnh mình dùng nhiều nhất, để lấy dữ liệu từ bảng. Cơ bản nhất là lấy tất cả:
+
+```sql
+SELECT * FROM Sach;
+```
+
+| ID | TenSach          | TacGia       | Gia    | TonKho |
+|----|------------------|--------------|--------|--------|
+| 1  | Lập trình Python| Nguyễn Văn A | 150000 | 50     |
+| 2  | SQL Dễ Hiểu     | Trần Thị B   | 120000 | 5      |
+| 3  | Web Dev Basics   | Phạm Văn C   | 180000 | 200    |
+
+Để lấy cột cụ thể:
+
+```sql
+SELECT TenSach, Gia FROM Sach;
+```
+
+| TenSach          | Gia    |
+|------------------|--------|
+| Lập trình Python| 150000 |
+| SQL Dễ Hiểu     | 120000 |
+| Web Dev Basics   | 180000 |
+
+Thêm WHERE để lọc:
+
+```sql
+SELECT * FROM Sach WHERE Gia < 150000;
+```
+
+| ID | TenSach      | TacGia     | Gia    | TonKho |
+|----|--------------|------------|--------|--------|
+| 2  | SQL Dễ Hiểu | Trần Thị B | 120000 | 5      |
+
+Sắp xếp với ORDER BY:
+
+```sql
+SELECT * FROM Sach ORDER BY Gia DESC;
+```
+
+| ID | TenSach          | TacGia       | Gia    | TonKho |
+|----|------------------|--------------|--------|--------|
+| 3  | Web Dev Basics   | Phạm Văn C   | 180000 | 200    |
+| 1  | Lập trình Python| Nguyễn Văn A | 150000 | 50     |
+| 2  | SQL Dễ Hiểu     | Trần Thị B   | 120000 | 5      |
+
+Giới hạn kết quả với LIMIT:
+
+```sql
+SELECT * FROM Sach ORDER BY Gia DESC LIMIT 2;
+```
+
+| ID | TenSach          | TacGia       | Gia    | TonKho |
+|----|------------------|--------------|--------|--------|
+| 3  | Web Dev Basics   | Phạm Văn C   | 180000 | 200    |
+| 1  | Lập trình Python| Nguyễn Văn A | 150000 | 50     |
+
+Loại bỏ trùng lặp với DISTINCT:
+
+```sql
+SELECT DISTINCT TacGia FROM Sach;
+```
+
+| TacGia       |
+|--------------|
+| Nguyễn Văn A |
+| Trần Thị B   |
+| Phạm Văn C   |
+
+Alias để đặt tên ngắn gọn:
+
+```sql
+SELECT TenSach AS "Tên Sách", Gia AS "Giá Bán" FROM Sach;
+```
+
+| Tên Sách          | Giá Bán |
+|-------------------|---------|
+| Lập trình Python | 150000  |
+| SQL Dễ Hiểu      | 120000  |
+| Web Dev Basics    | 180000  |
+
+## Nhóm Dữ Liệu với GROUP BY
+
+*(Tham khảo thêm: [https://mode.com/sql-tutorial/sql-group-by/](https://mode.com/sql-tutorial/sql-group-by/))*
+
+GROUP BY dùng để nhóm các hàng có giá trị giống nhau trong một cột, thường kết hợp với các hàm tổng hợp như SUM, COUNT, AVG, MIN, MAX.
+
+Ví dụ, tính tổng doanh thu theo sách:
+
+```sql
+SELECT s.TenSach, SUM(d.SoLuong * s.Gia) AS TongDoanhThu
+FROM Sach s
+JOIN DonHang d ON s.ID = d.Sach_ID
+GROUP BY s.ID, s.TenSach;
+```
+
+| tensach          | tongdoanhthu |
+| ---------------- | ------------ |
+| Web Dev Basics   | 180000.00    |
+| SQL Dễ Hiểu      | 240000.00    |
+| Lập trình Python | 150000.00    |
+
+> GROUP BY sẽ tạo các nhóm dựa trên cột chỉ định, và các hàm tổng hợp tính toán trên mỗi nhóm. Nếu không có GROUP BY, hàm tổng hợp sẽ tính trên toàn bộ kết quả.
+
+> Gotcha: Với PostgreSQL, mọi cột xuất hiện trong SELECT (ngoài các hàm tổng hợp) đều phải có trong GROUP BY. Để an toàn và ổn định, hãy GROUP BY khóa chính (ví dụ `s.ID`) kèm theo các cột mô tả (ví dụ `s.TenSach`).
+
+Thêm HAVING để lọc nhóm:
+
+```sql
+SELECT s.TenSach, SUM(d.SoLuong * s.Gia) AS TongDoanhThu
+FROM Sach s
+JOIN DonHang d ON s.ID = d.Sach_ID
+GROUP BY s.ID, s.TenSach
+HAVING SUM(d.SoLuong * s.Gia) > 160000;
+```
+
+| tensach        | tongdoanhthu |
+| -------------- | ------------ |
+| Web Dev Basics | 180000.00    |
+| SQL Dễ Hiểu    | 240000.00    |
+
+HAVING khác WHERE ở chỗ WHERE lọc trước khi nhóm, HAVING lọc sau khi nhóm.
+
+Ví dụ khác: Đếm số đơn hàng theo khách hàng, chỉ lấy những khách có hơn 1 đơn:
+
+```sql
+SELECT k.Ten, COUNT(d.ID) AS SoDon
+FROM KhachHang k
+LEFT JOIN DonHang d ON k.ID = d.KhachHang_ID
+GROUP BY k.ID, k.Ten
+HAVING COUNT(d.ID) > 1;
+```
+
+| ten           | sodon |
+| ------------- | ----- |
+| Lê Minh Khánh | 2     |
+
+## Lệnh INSERT: Thêm Dữ Liệu
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/sql-insert.html](https://www.postgresql.org/docs/current/sql-insert.html))*
+
+Thêm hàng mới vào bảng:
+
+> Mẹo an toàn: Khi thêm nhiều bản ghi, cân nhắc dùng giao dịch (BEGIN/COMMIT). Nếu lỡ sai, `ROLLBACK` sẽ cứu bạn.
+
+```sql
+INSERT INTO Sach (TenSach, TacGia, Gia, TonKho) VALUES ('JavaScript Cơ Bản', 'Lê Văn D', 140000, 30);
+```
+
+**Result:** 1 row inserted. Bảng Sach giờ có 4 hàng.
+
+Thêm nhiều hàng cùng lúc:
+
+```sql
+INSERT INTO Sach (TenSach, TacGia, Gia, TonKho) VALUES 
+('React Handbook', 'Nguyễn Thị E', 160000, 20),
+('Node.js Guide', 'Trần Văn F', 170000, 15);
+```
+
+**Result:** 2 rows inserted. Bảng Sach giờ có 6 hàng.
+
+## Lệnh UPDATE: Cập Nhật Dữ Liệu
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/sql-update.html](https://www.postgresql.org/docs/current/sql-update.html))*
+
+Cập nhật giá sách:
+
+```sql
+UPDATE Sach SET Gia = 130000 WHERE ID = 2;
+```
+
+**Result:** 1 row updated. Sách ID 2 giờ có Gia = 130000.
+
+Cập nhật nhiều cột:
+
+```sql
+UPDATE Sach SET Gia = 155000, TonKho = 45 WHERE ID = 1;
+```
+
+**Result:** 1 row updated. Sách ID 1 giờ có Gia = 155000, TonKho = 45.
+
+Quan trọng: Luôn dùng WHERE, nếu quên sẽ cập nhật toàn bộ bảng
+
+> Mẹo an toàn: Trước khi UPDATE/DELETE, hãy chạy một câu `SELECT ... WHERE ...` với đúng điều kiện để xem sẽ đụng vào những dòng nào. Làm vậy tránh những lần nghịch ngu :))).
+
+## Lệnh DELETE: Xóa Dữ Liệu
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/sql-delete.html](https://www.postgresql.org/docs/current/sql-delete.html))*
+
+Xóa sách cụ thể:
+
+```sql
+DELETE FROM Sach WHERE ID = 3;
+```
+*Giả sử không có đơn hàng nào tham chiếu tới sách này (hoặc foreign key chưa bật / đã dùng ON DELETE CASCADE), lệnh sẽ xóa 1 dòng.*
+
+**Result:** 1 row deleted. Sách ID 3 đã bị xóa.
+
+Xóa sách hết hàng:
+
+```sql
+DELETE FROM Sach WHERE TonKho = 0;
+```
+
+**Result:** 0 rows deleted. Không có sách nào hết hàng trong dữ liệu mẫu.
+
+Cũng nhớ dùng WHERE, nếu không sẽ xóa toàn bộ bảng
+
+Deep dive: DELETE với JOIN (PostgreSQL):
+
+```sql
+-- PostgreSQL: dùng USING để JOIN trong DELETE
+DELETE FROM Sach s
+USING DonHang d
+WHERE s.ID = d.Sach_ID
+    AND d.NgayMua < '2025-01-01';
+```
+
+**Result:** 0 rows deleted. Không có đơn hàng nào trước 2025.
+
+> Xóa sách đã được mua trước năm 2025. Trong PostgreSQL, nếu có foreign key từ DonHang -> Sach mà KHÔNG đặt ON DELETE CASCADE, lệnh có thể fail; thông thường nên xóa ở bảng con trước hoặc bật CASCADE.
+
+> Mẹo thực tế: Viết phiên bản SELECT trước để soi kết quả:
+> ```sql
+> SELECT s.*
+> FROM Sach s
+> USING DonHang d -- (gợi ý cách tư duy, không phải cú pháp hợp lệ cho SELECT)
+> WHERE s.ID = d.Sach_ID AND d.NgayMua < '2025-01-01';
+> ```
+> Trong thực tế, bạn sẽ viết JOIN cho SELECT như bình thường, sau đó đổi sang DELETE ... USING khi đã chắc chắn.
+
+Ví dụ về CASCADE: Nếu bảng DonHang có foreign key đến Sach với ON DELETE CASCADE, khi xóa sách, các đơn hàng liên quan sẽ tự động xóa.
+
+```sql
+-- Giả sử có constraint CASCADE
+DELETE FROM Sach WHERE ID = 1;  -- Sẽ xóa sách và các đơn hàng liên quan
+```
+
+**Result:** 1 row deleted from Sach, 1 row deleted from DonHang (do CASCADE).
+
+Nếu không CASCADE, lệnh sẽ fail nếu có dữ liệu liên quan.
+
+## Kết Nối Các Bảng với JOIN
+
+*(Tham khảo thêm: [https://mode.com/sql-tutorial/sql-joins/](https://mode.com/sql-tutorial/sql-joins/))*
+
+Dữ liệu của chúng ta được chia ra nhiều bảng (KhachHang, Sach, DonHang). JOIN là cú pháp "thần kỳ" giúp chúng ta kết hợp dữ liệu từ các bảng này lại thành một kết quả duy nhất.
+
+Để dễ hình dung, hãy luôn nghĩ về biểu đồ Venn (biểu đồ tập hợp) khi nói đến JOIN.
+
+![venn-join](/images/sql/2/venn-join-sql.png)
+
+> Lời thú thật: JOIN là chỗ mình từng xoắn não nhất. Hãy dùng mental model đơn giản:
+> - LEFT JOIN: coi bảng bên trái là chính chủ, luôn giữ lại mọi dòng bên trái; bên phải chỉ thêm được thì thêm, không thì để NULL.
+> - INNER JOIN: chỉ giữ những cặp khớp nhau (giống giao nhau của hai tập).
+> - RIGHT/FULL: giống LEFT nhưng đối xứng, hoặc lấy tất cả hai bên.
+> Pro tip: Viết SELECT trước với các cột và điều kiện JOIN rõ ràng. Khi kết quả đúng rồi, mới chuyển sang UPDATE/DELETE nếu cần.
+
+### 1. INNER JOIN (Phép Giao)
+Đây là loại JOIN phổ biến nhất. Nó chỉ trả về những hàng có khớp ở cả hai bảng.
+
+Ví dụ: Lấy thông tin các đơn hàng đã được đặt thành công (tức là có Khách hàng khớp và Sách khớp).
+
+```sql
+SELECT k.Ten, s.TenSach, d.NgayMua
+FROM KhachHang k
+INNER JOIN DonHang d ON k.ID = d.KhachHang_ID
+INNER JOIN Sach s ON d.Sach_ID = s.ID;
+```
+
+| Ten | TenSach | NgayMua |
+|-----|---------|---------|
+| Lê Minh Khánh | Lập trình Python | 2025-01-15 |
+| Hoàng Thị Lan | SQL Dễ Hiểu | 2025-01-16 |
+| Lê Minh Khánh | Web Dev Basics | 2025-01-17 |
+
+***Phân tích**: Chú ý rằng khách hàng "Võ Quốc Huy" (ID 3) không xuất hiện trong kết quả này. Đó là vì khách hàng này không có hàng nào khớp trong bảng DonHang. INNER JOIN chỉ lấy phần giao của hai tập hợp.*
+
+### 2. LEFT JOIN (Lấy Hết Bảng Trái)
+Đây là loại JOIN quan trọng thứ hai. Nó sẽ trả về TẤT CẢ các hàng từ bảng bên trái (bảng được khai báo trước), và chỉ các hàng khớp từ bảng bên phải.
+
+Nếu một hàng ở bảng trái không tìm thấy hàng khớp ở bảng phải, nó vẫn được giữ lại, và các cột của bảng phải sẽ được điền giá trị NULL.
+
+Ví dụ: Lấy TẤT CẢ khách hàng, và kèm theo tên sách họ đã mua (nếu có).
+
+```sql
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+LEFT JOIN DonHang d ON k.ID = d.KhachHang_ID
+LEFT JOIN Sach s ON d.Sach_ID = s.ID;
+```
+
+| Ten | TenSach |
+|-----|---------|
+| Lê Minh Khánh | Lập trình Python |
+| Hoàng Thị Lan | SQL Dễ Hiểu |
+| Lê Minh Khánh | Web Dev Basics |
+| Võ Quốc Huy | NULL |
+
+**Phân tích:** 
+- Khách hàng "Võ Quốc Huy" đã xuất hiện.
+- Tại sao TenSach là NULL? Vì k.ID = 3 (Võ Quốc Huy) được đem đi tìm trong DonHang nhưng không khớp (`k.ID = d.KhachHang_ID` thất bại).
+- Do là `LEFT JOIN`, hàng "Võ Quốc Huy" vẫn được giữ lại.
+- Khi tiếp tục `JOIN` với bảng Sach (d.Sach_ID = s.ID), vì d.Sach_ID lúc này là NULL (từ bước trước), nên phép so sánh NULL = s.ID cũng thất bại.
+- Kết quả là các cột từ bảng Sach (như TenSach) cũng là NULL.
+
+### 3. Cạm Bẫy Lớn Nhất: LEFT JOIN với WHERE vs. ON
+
+Đây là lỗi logic cực kỳ phổ biến mà người mới (và cả người cũ) hay mắc phải.
+
+Tình huống: Bạn muốn lấy TẤT CẢ khách hàng, và nếu họ có mua hàng, thì chỉ hiển thị đơn hàng của cuốn "SQL Dễ Hiểu".
+
+#### ❌ Cách làm SAI (Dùng WHERE)
+
+Nhiều người sẽ nghĩ viết `LEFT JOIN` rồi lọc bằng `WHERE` như sau:
+
+```sql
+-- Query này SAI về logic
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+LEFT JOIN DonHang d ON k.ID = d.KhachHang_ID
+LEFT JOIN Sach s ON d.Sach_ID = s.ID
+WHERE
+    s.TenSach = 'SQL Dễ Hiểu'; -- CẠM BẪY Ở ĐÂY
+```
+
+Kết quả (Sai):
+
+| Ten | TenSach |
+|-----|---------|
+| Hoàng Thị Lan | SQL Dễ Hiểu |
+
+Tại sao sai? "Võ Quốc Huy" và "Lê Minh Khánh" đâu rồi?
+- `LEFT JOIN` chạy đúng, nó lấy cả "Võ Quốc Huy" (với s.TenSach là NULL) và "Lê Minh Khánh" (với s.TenSach là 'Lập trình Python'...).
+- Sau đó, mệnh đề `WHERE` chạy. Nó lọc sau khi đã join.
+- Hàng của "Võ Quốc Huy": `WHERE NULL = 'SQL Dễ Hiểu'` -> Sai. (Bị loại)
+- Hàng của "Lê Minh Khánh": `WHERE 'Lập trình Python' = 'SQL Dễ Hiểu'` -> Sai. (Bị loại)
+- Vô tình, `LEFT JOIN` của bạn đã bị biến thành `INNER JOIN`.
+
+#### ✅ Cách làm ĐÚNG (Chuyển điều kiện lọc vào ON)
+
+Khi dùng LEFT JOIN, nếu bạn muốn lọc trên bảng "bên phải" (DonHang, Sach), bạn phải đưa điều kiện đó vào mệnh đề ON.
+
+```sql
+-- Query này ĐÚNG logic
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+LEFT JOIN DonHang d ON k.ID = d.KhachHang_ID
+LEFT JOIN Sach s ON d.Sach_ID = s.ID
+    AND s.TenSach = 'SQL Dễ Hiểu'; -- Điều kiện lọc đặt ở ĐÂY
+```
+Kết quả (Đúng):
+
+| Ten | TenSach |
+|-----|---------|
+| Lê Minh Khánh | NULL |
+| Hoàng Thị Lan | SQL Dễ Hiểu |
+| Võ Quốc Huy | NULL |
+
+**Phân tích:**
+- SQL lấy "Lê Minh Khánh", tìm đơn hàng khớp ON ... AND s.TenSach = 'SQL Dễ Hiểu'. Không tìm thấy đơn nào khớp cả hai điều kiện, nên s.TenSach là NULL.
+- SQL lấy "Hoàng Thị Lan", tìm thấy đơn hàng khớp cả hai điều kiện.
+- SQL lấy "Võ Quốc Huy", không tìm thấy đơn hàng nào.
+- Vì là `LEFT JOIN`, tất cả 3 khách hàng đều được giữ lại.
+
+***Quy tắc vàng:** Với LEFT JOIN, điều kiện lọc cho bảng "bên trái" (k) đặt ở WHERE. Điều kiện lọc cho bảng "bên phải" (d, s) phải đặt ở ON.*
+
+### 4. RIGHT JOIN (Lấy Hết Bảng Phải)
+
+**Định Nghĩa:** `RIGHT JOIN` hoạt động ngược lại với `LEFT JOIN`. Nó giữ **tất cả hàng từ bảng bên phải**, và chỉ lấy hàng khớp từ bảng bên trái.
+
+**Ví Dụ Thực Tế:**
+
+```sql
+SELECT k.Ten AS KhachHang, s.TenSach
+FROM KhachHang k
+RIGHT JOIN DonHang d ON k.ID = d.KhachHang_ID
+RIGHT JOIN Sach s ON d.Sach_ID = s.ID
+ORDER BY s.TenSach;
+```
+
+**Kết Quả:**
+
+| khachhang     | tensach             |
+| ------------- | ------------------- |
+| null          | JavaScript Advanced |
+| Lê Minh Khánh | Lập trình Python    |
+| Hoàng Thị Lan | SQL Dễ Hiểu         |
+| Lê Minh Khánh | Web Dev Basics      |
+
+> **Ghi Chú Thực Tế:** Trong thực tế, `RIGHT JOIN` ít được dùng hơn `LEFT JOIN`. Lý do đơn giản: nếu bạn muốn giữ tất cả bảng phải, bạn có thể **đổi thứ tự bảng và dùng `LEFT JOIN`** thay vì `RIGHT JOIN`. Kết quả hoàn toàn giống nhưng rõ ràng hơn.
+
+### 5. FULL OUTER JOIN (Lấy Hết Từ Cả Hai Bảng)
+
+**Định Nghĩa:** `FULL OUTER JOIN` kết hợp cả `LEFT JOIN` và `RIGHT JOIN`. Nó trả về **tất cả hàng từ cả hai bảng**, với `NULL` cho những phần không khớp.
+
+**Lưu Ý:** `FULL OUTER JOIN` **không hỗ trợ trong MySQL**. Nếu bạn dùng MySQL, phải dùng `UNION` như sau:
+
+```sql
+-- PostgreSQL (hỗ trợ FULL OUTER JOIN)
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+FULL OUTER JOIN DonHang d ON k.ID = d.KhachHang_ID
+FULL OUTER JOIN Sach s ON d.Sach_ID = s.ID;
+
+-- MySQL (phải dùng UNION thay vì FULL OUTER JOIN)
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+LEFT JOIN DonHang d ON k.ID = d.KhachHang_ID
+LEFT JOIN Sach s ON d.Sach_ID = s.ID
+UNION
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+RIGHT JOIN DonHang d ON k.ID = d.KhachHang_ID
+RIGHT JOIN Sach s ON d.Sach_ID = s.ID;
+```
+
+**Kết Quả Mong Đợi:**
+
+| Ten | TenSach |
+|-----|---------|
+| Lê Minh Khánh | Lập trình Python |
+| Hoàng Thị Lan | SQL Dễ Hiểu |
+| Lê Minh Khánh | Web Dev Basics |
+| Võ Quốc Huy | NULL |
+| NULL | JavaScript Advanced |
+
+> **Hành Vi:** `FULL OUTER JOIN` cho thấy **toàn bộ dữ liệu từ cả hai bảng**. Nó hữu ích khi bạn muốn kiểm tra "có cái gì không khớp không?" hoặc tìm những bản ghi bị mất trong quá trình migration.
+
+### 6. CROSS JOIN (Cartesian Product)
+
+**Định Nghĩa:** `CROSS JOIN` tạo **tất cả kombinasi có thể** giữa hai bảng. Nếu bảng A có 3 hàng và bảng B có 4 hàng, kết quả sẽ có 3 × 4 = 12 hàng.
+
+```sql
+SELECT k.Ten, s.TenSach
+FROM KhachHang k
+CROSS JOIN Sach s;
+```
+
+**Kết Quả (Một Phần):**
+
+| Ten | TenSach |
+|-----|---------|
+| Lê Minh Khánh | Lập trình Python |
+| Lê Minh Khánh | SQL Dễ Hiểu |
+| Lê Minh Khánh | Web Dev Basics |
+| Lê Minh Khánh | JavaScript Advanced |
+| Hoàng Thị Lan | Lập trình Python |
+| Hoàng Thị Lan | SQL Dễ Hiểu |
+| ... | ... |
+
+> ⚠️ **CẢNH BÁO:** `CROSS JOIN` rất nguy hiểm! Nếu bạn có hai bảng với 1 triệu hàng mỗi bảng, kết quả sẽ có **1 tỷ hàng** (1 triệu × 1 triệu). Server sẽ chết, memory cháy hết, query bị kill. Thường chỉ dùng `CROSS JOIN` khi bạn **chắc chắn** biết kích thước dữ liệu và có lý do rõ ràng (tạo bảng lịch, tất cả kombinasi yếu tố, v.v.).
+
+---
+
+## Cheat Sheet: Chọn JOIN Phù Hợp
+
+| Nhu Cầu | Loại JOIN | Khi Nào Dùng |
+|--------|-----------|--------------|
+| Chỉ lấy dữ liệu khớp giữa hai bảng | **INNER JOIN** | Danh sách khách hàng đã mua sách |
+| Lấy tất cả từ bảng trái, khớp từ bảng phải | **LEFT JOIN** | Tất cả khách hàng (kể cả chưa mua) + sách họ mua |
+| Lấy tất cả từ bảng phải, khớp từ bảng trái | **RIGHT JOIN** | Tất cả sách + ai đó mua nó (dùng ít) |
+| Lấy tất cả từ cả hai bảng | **FULL OUTER JOIN** | Kiểm tra coverage, tìm dữ liệu mất (PostgreSQL only) |
+| Tất cả kombinasi có thể | **CROSS JOIN** | Tạo bảng lịch, permutasi yếu tố (⚠️ cẩn thận) |
+
+## Thực Hành: Một Số Truy Vấn Thường Dùng
+
+*(Tham khảo thêm: [https://www.sqltutorial.org/](https://www.sqltutorial.org/))*
+
+Báo cáo doanh thu theo sách:
+
+```sql
+SELECT s.TenSach, SUM(d.SoLuong * s.Gia) AS "Doanh Thu"
+FROM Sach s
+JOIN DonHang d ON s.ID = d.Sach_ID
+GROUP BY s.ID, s.TenSach
+ORDER BY "Doanh Thu" DESC;
+```
+
+| TenSach | Doanh Thu |
+|---------|-----------|
+| SQL Dễ Hiểu | 240000 |
+| Web Dev Basics | 180000 |
+| Lập trình Python | 150000 |
+
+Top khách hàng mua nhiều nhất:
+
+```sql
+SELECT k.Ten, COUNT(d.ID) AS "Số Đơn"
+FROM KhachHang k
+JOIN DonHang d ON k.ID = d.KhachHang_ID
+GROUP BY k.ID, k.Ten
+ORDER BY "Số Đơn" DESC
+LIMIT 5;
+```
+
+| Ten | Số Đơn |
+|-----|--------|
+| Lê Minh Khánh | 2 |
+| Hoàng Thị Lan | 1 |
+
+
+## Một Số Lỗi Hay Gặp và Kinh Nghiệm
+
+- Quên WHERE khi UPDATE/DELETE: Có thể làm hỏng toàn bộ dữ liệu. Luôn kiểm tra lại trước khi chạy.
+- Nhầm alias: Khi JOIN nhiều bảng, dễ lẫn lộn tên cột. Dùng alias rõ ràng.
+- Cartesian product: JOIN mà quên điều kiện ON, kết quả sẽ nhân lên rất nhiều hàng.
+- Encoding: Nếu dữ liệu tiếng Việt bị lỗi, kiểm tra charset của database.
+- Lẫn lộn AND/OR: Thêm ngoặc cho rõ ràng, đặc biệt khi điều kiện dài. `A AND (B OR C)` khác hẳn `(A AND B) OR C`.
+- SELECT cột không có trong GROUP BY (PostgreSQL): Sẽ lỗi. Hãy GROUP BY khóa chính và các cột hiển thị.
+- Dùng FLOAT cho tiền: Nhảy số nhẹ nhàng nhưng đau ví. Dùng DECIMAL cho an toàn.
+
+## Tổng Kết
+
+Các lệnh cơ bản SELECT, INSERT, UPDATE, DELETE là nền tảng để làm việc với SQL. Kết hợp với JOIN, mình có thể truy vấn dữ liệu phức tạp từ nhiều bảng. Viết bài này giúp mình củng cố lại, hy vọng bạn cũng thấy hữu ích.
+
+Ở bài tiếp theo, mình sẽ nói về các khái niệm nâng cao hơn như index, view, hoặc stored procedure. Nếu bạn vừa đấm được JOIN sau bài này, chúc mừng. Còn nếu vẫn thấy xoắn, không sao đọc lại, vẽ sơ đồ, và thử chạy SELECT từng bước. SQL phần lớn là luyện tay và soi kết quả.
+
+## Nguồn Tham Khảo
+
+- [SQLZoo – Interactive SQL exercises](https://sqlzoo.net/)
+- [Mode Analytics SQL Tutorial](https://mode.com/sql-tutorial/)
+- [PostgreSQL Tutorial](https://www.postgresqltutorial.com/)
+- [MySQL Tutorial](https://www.mysqltutorial.org/)
+
+Hẹn gặp lại.
