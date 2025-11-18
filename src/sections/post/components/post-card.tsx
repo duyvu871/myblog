@@ -23,8 +23,8 @@ export default function PostCard({
           <Image
             src={post.thumbnail}
             alt={post.title}
-            width={400}
-            height={200}
+            // width={400}
+            // height={200}
             radius="12px"
             style={{
               width: '100%',
