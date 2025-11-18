@@ -387,7 +387,7 @@ export function CopyMarkdownButton({
             </div>
           </Menu.Item>
         ))}
-
+        {/* 
         <Menu.Divider />
 
         <Menu.Label>Share</Menu.Label>
@@ -411,7 +411,7 @@ export function CopyMarkdownButton({
           onClick={() => handleShare('threads')}
         >
           Chia sẻ lên Threads
-        </Menu.Item>
+        </Menu.Item> */}
       </Menu.Dropdown>
     </Menu>
   );
