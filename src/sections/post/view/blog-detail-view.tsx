@@ -117,8 +117,11 @@ export default async function BlogDetailView({ slug }: BlogDetailViewProps) {
                 <CopyMarkdownButton
                   markdown={post.rawMarkdown}
                   frontmatter={post.frontmatter}
+                  title={post.title}
+                  url={`${process.env.NEXT_PUBLIC_SITE_URL || ''}/blog/${post.slug}`}
                   variant="light"
                   size="xs"
+                  buttonText=""
                 />
               </Group>
 

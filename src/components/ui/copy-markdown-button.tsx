@@ -2,7 +2,17 @@
 
 import { useState } from 'react';
 import { Button, Tooltip, Menu, ActionIcon, rem } from '@mantine/core';
-import { Check, Copy, AlertTriangle, ChevronDown, FileText, Code, AlignLeft } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  AlertTriangle,
+  ChevronDown,
+  FileText,
+  Code,
+  AlignLeft,
+  Share2,
+  Facebook,
+} from 'lucide-react';
 import { notifications } from '@mantine/notifications';
 import {
   prepareMarkdownForCopy,
@@ -188,6 +198,10 @@ interface CopyMarkdownButtonProps {
   markdown: string;
   /** Optional frontmatter to include */
   frontmatter?: any;
+  /** Post title for sharing */
+  title?: string;
+  /** Post URL for sharing */
+  url?: string;
   /** Button variant */
   variant?: 'filled' | 'light' | 'outline' | 'subtle' | 'default';
   /** Button size */
@@ -210,6 +224,8 @@ interface CopyMarkdownButtonProps {
 export function CopyMarkdownButton({
   markdown,
   frontmatter,
+  title,
+  url,
   variant = 'light',
   size = 'sm',
   buttonText = '',
@@ -304,6 +320,42 @@ export function CopyMarkdownButton({
     }
   };
 
+  const handleShare = (platform: 'facebook' | 'threads') => {
+    const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+    const shareTitle = title || 'Check out this post';
+
+    let shareLink = '';
+    const windowFeatures = 'width=600,height=400,scrollbars=yes';
+
+    switch (platform) {
+      case 'facebook':
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        break;
+
+      case 'threads':
+        // Threads share URL format
+        shareLink = `https://www.threads.net/intent/post?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`;
+        break;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.open(shareLink, '_blank', windowFeatures);
+
+      const platformNames = {
+        facebook: 'Facebook',
+        threads: 'Threads',
+      };
+
+      notifications.show({
+        title: 'Đang mở...',
+        message: `Chia sẻ lên ${platformNames[platform]}`,
+        color: 'blue',
+        icon: <Share2 size={18} />,
+        autoClose: 2000,
+      });
+    }
+  };
+
   return (
     <Menu shadow="md" width={280} position="bottom-end">
       <Menu.Target>
@@ -335,6 +387,31 @@ export function CopyMarkdownButton({
             </div>
           </Menu.Item>
         ))}
+
+        <Menu.Divider />
+
+        <Menu.Label>Share</Menu.Label>
+        <Menu.Item
+          leftSection={<Facebook style={{ width: rem(14), height: rem(14) }} />}
+          onClick={() => handleShare('facebook')}
+          color="blue"
+        >
+          Chia sẻ lên Facebook
+        </Menu.Item>
+        <Menu.Item
+          leftSection={
+            <svg
+              style={{ width: rem(14), height: rem(14) }}
+              viewBox="0 0 192 192"
+              fill="currentColor"
+            >
+              <path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.924-10.548 21.342-10.548h.24c6.64.038 11.647 1.783 14.875 5.183 2.838 2.988 4.647 7.622 5.32 13.746-5.382-.426-11.124-.45-17.175-.074-23.978 1.484-39.532 16.06-38.644 36.193.477 10.82 5.956 19.893 15.42 25.534 6.954 4.15 15.616 6.005 24.344 5.225 13.106-1.175 23.014-6.926 28.652-16.633 5.38-9.257 6.844-21.38 6.844-34.282v-3.55c0-3.81-.052-6.86-.153-9.136 5.348 2.964 9.31 7.35 11.546 12.845l14.78-8.53c-4.063-9.99-11.687-17.086-21.735-20.218Zm-26.371 52.984c-4.1 7.057-11.138 10.788-19.8 10.495-5.53-.187-10.368-1.67-13.656-4.193-3.495-2.68-5.61-6.674-5.844-11.022-.523-9.798 6.948-18.52 24.687-19.656 5.418-.347 10.668-.3 15.64.15.11 6.772.454 15.447-1.027 24.226Z" />
+            </svg>
+          }
+          onClick={() => handleShare('threads')}
+        >
+          Chia sẻ lên Threads
+        </Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );
@@ -351,6 +428,8 @@ interface CopyMarkdownIconButtonProps
 export function CopyMarkdownIconButton({
   markdown,
   frontmatter,
+  title,
+  url,
   variant = 'subtle',
   size = 'sm',
   tooltipText = 'Copy',
@@ -431,6 +510,26 @@ export function CopyMarkdownIconButton({
     }
   };
 
+  const handleShare = (platform: 'facebook' | 'threads') => {
+    const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+    const shareTitle = title || 'Check out this post';
+
+    let shareLink = '';
+
+    switch (platform) {
+      case 'facebook':
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'threads':
+        shareLink = `https://www.threads.net/intent/post?text=${encodeURIComponent(shareTitle + ' ' + shareUrl)}`;
+        break;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.open(shareLink, '_blank', 'width=600,height=400');
+    }
+  };
+
   return (
     <Menu shadow="md" width={280} position="bottom-end">
       <Menu.Target>
@@ -462,6 +561,30 @@ export function CopyMarkdownIconButton({
             </div>
           </Menu.Item>
         ))}
+
+        {/* <Menu.Divider /> */}
+
+        {/* <Menu.Label>Share</Menu.Label>
+        <Menu.Item
+          leftSection={<Facebook style={{ width: rem(14), height: rem(14) }} />}
+          onClick={() => handleShare('facebook')}
+        >
+          Facebook
+        </Menu.Item>
+        <Menu.Item
+          leftSection={
+            <svg
+              style={{ width: rem(14), height: rem(14) }}
+              viewBox="0 0 192 192"
+              fill="currentColor"
+            >
+              <path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.924-10.548 21.342-10.548h.24c6.64.038 11.647 1.783 14.875 5.183 2.838 2.988 4.647 7.622 5.32 13.746-5.382-.426-11.124-.45-17.175-.074-23.978 1.484-39.532 16.06-38.644 36.193.477 10.82 5.956 19.893 15.42 25.534 6.954 4.15 15.616 6.005 24.344 5.225 13.106-1.175 23.014-6.926 28.652-16.633 5.38-9.257 6.844-21.38 6.844-34.282v-3.55c0-3.81-.052-6.86-.153-9.136 5.348 2.964 9.31 7.35 11.546 12.845l14.78-8.53c-4.063-9.99-11.687-17.086-21.735-20.218Zm-26.371 52.984c-4.1 7.057-11.138 10.788-19.8 10.495-5.53-.187-10.368-1.67-13.656-4.193-3.495-2.68-5.61-6.674-5.844-11.022-.523-9.798 6.948-18.52 24.687-19.656 5.418-.347 10.668-.3 15.64.15.11 6.772.454 15.447-1.027 24.226Z" />
+            </svg>
+          }
+          onClick={() => handleShare('threads')}
+        >
+          Threads
+        </Menu.Item> */}
       </Menu.Dropdown>
     </Menu>
   );

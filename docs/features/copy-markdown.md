@@ -1,12 +1,25 @@
-# Copy as Markdown Feature
+# Copy as Markdown & Share Feature
 
 ## Tổng quan
 
-Tính năng "Copy as Markdown" cho phép người dùng sao chép nội dung bài viết blog dưới dạng markdown an toàn, bao gồm cả frontmatter và nội dung chính.
+Tính năng "Copy & Share" cho phép người dùng sao chép nội dung bài viết blog dưới dạng markdown an toàn và chia sẻ bài viết lên các nền tảng mạng xã hội như Facebook, Threads, và Twitter.
 
 ## Tính năng chính
 
-### 1. **Sanitization (Khử độc)**
+### 1. **Copy Options (Các tùy chọn copy)**
+
+- **Copy as Markdown**: Copy đầy đủ với frontmatter
+- **Copy Markdown (No Frontmatter)**: Chỉ copy nội dung markdown
+- **Copy as Plain Text**: Copy dạng text thuần túy (loại bỏ markdown syntax)
+- **Copy as HTML**: Copy dưới dạng HTML markup
+
+### 2. **Share Options (Chia sẻ)**
+
+- **Facebook**: Chia sẻ link bài viết lên Facebook
+- **Threads**: Chia sẻ lên Threads (Instagram)
+- **Twitter**: Chia sẻ lên Twitter/X
+
+### 3. **Sanitization (Khử độc)**
 
 - Loại bỏ các thẻ `<script>` và nội dung bên trong
 - Loại bỏ các event handler nguy hiểm (onclick, onerror, etc.)
