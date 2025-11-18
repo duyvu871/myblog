@@ -17,6 +17,7 @@ import {
 import RelatedPosts from 'app/sections/post/components/related-posts';
 import { Toc } from 'app/components/ui';
 import { Image } from 'app/components/ui/image';
+import { CopyMarkdownButton } from 'app/components/ui';
 
 interface BlogDetailViewProps {
   slug: string;
@@ -97,20 +98,28 @@ export default async function BlogDetailView({ slug }: BlogDetailViewProps) {
                 ))}
               </Group>
 
-              <Group justify="space-between" mb="lg">
-                <Text c="dimmed">
-                  by{' '}
-                  <Anchor c="blue" component={Link} href={`/author/${post.author}`}>
-                    {post.author}
-                  </Anchor>
-                </Text>
-                <Text c="blue" component="time" dateTime={post.date}>
-                  {new Date(post.date).toLocaleDateString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </Text>
+              <Group justify="space-between" mb="lg" wrap="wrap">
+                <Group gap="lg">
+                  <Text c="dimmed">
+                    by{' '}
+                    <Anchor c="blue" component={Link} href={`/author/${post.author}`}>
+                      {post.author}
+                    </Anchor>
+                  </Text>
+                  <Text c="blue" component="time" dateTime={post.date}>
+                    {new Date(post.date).toLocaleDateString('vi-VN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </Group>
+                <CopyMarkdownButton
+                  markdown={post.rawMarkdown}
+                  frontmatter={post.frontmatter}
+                  variant="light"
+                  size="xs"
+                />
               </Group>
 
               <Divider mb="xl" />

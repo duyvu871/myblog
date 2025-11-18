@@ -1,0 +1,419 @@
+---
+title: "SQL Cơ Bản #2.1: DDL - Định Nghĩa Cấu Trúc Dữ Liệu"
+description: "Hiểu rõ DDL (CREATE, ALTER, DROP, TRUNCATE), tác dụng, hành vi, và những best practice khi thay đổi schema. Bao gồm case study về downtime và migration."
+date: "2025-11-18"
+author: "Bui An Du"
+tags: ["sql", "ddl", "database", "schema", "migration"]
+published: true
+thumbnail: "/images/sql/2.1/drop-db.png"
+---
+
+# SQL Cơ Bản #2.1: DDL - Định Nghĩa Cấu Trúc Dữ Liệu
+
+Tiếp nối phần CRUD (SELECT, INSERT, UPDATE, DELETE), bài này mình cùng bạn nói về DDL – nhóm lệnh để **định nghĩa hoặc thay đổi cấu trúc** cơ sở dữ liệu. Chủ đề này nghe có vẻ chán, nhưng ai từng thay đổi schema trên hệ thống đang chạy đều biết: chỉ một quyết định vội là mồ hôi hột cả team :))).
+
+Có lần mình nghĩ “thêm một cột thôi mà”, và hệ thống kẹt khá lâu. Từ đó mình ghi lại cách làm gọn gàng để lần sau bạn (và mình) tránh lặp lại.
+
+---
+
+## DDL là gì? Tác dụng – Hành vi – Ảnh hưởng
+
+![ddl-vs-dml](/images/sql/2.1/ddl-vs-dml-example.png)
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/ddl.html](https://www.postgresql.org/docs/current/ddl.html))*
+
+### Tác dụng
+
+**DDL (Data Definition Language)** là nhóm lệnh SQL dùng để **định nghĩa hoặc thay đổi cấu trúc** của cơ sở dữ liệu: bảng (tables), chỉ mục (indexes), schema, views...
+
+Ví dụ: tạo bảng sách mới.
+
+```sql
+CREATE TABLE Sach (
+  SachID INT PRIMARY KEY,
+  TenSach VARCHAR(200),
+  TacGia VARCHAR(100),
+  Gia DECIMAL(10,2)
+);
+```
+
+Có thể hình dung: nếu **DML (INSERT, UPDATE, DELETE)** là thay đổi dữ liệu bên trong, thì **DDL** là thay đổi khung, tức là cấu trúc của căn nhà.
+
+### Hành vi
+
+Khi bạn chạy lệnh DDL như `CREATE`, `ALTER`, `DROP`, thao tác này tác động vào **cấu trúc** dữ liệu — không trực tiếp vào dữ liệu hiện có (mặc dù ALTER hay DROP vẫn có thể ảnh hưởng đến dữ liệu).
+
+Bạn có thể gặp vài side-effect hơi khó chịu:
+- **Khóa bảng** – có thể tạm thời khóa (mức độ và thời gian tùy DBMS/version và lệnh cụ thể)
+- **Thời gian thực thi lâu** – bảng càng lớn, ALTER/DROP càng cần thời gian
+- **Ảnh hưởng ứng dụng** – code chưa kịp cập nhật theo schema mới là lỗi ngay
+
+Khác với DML (INSERT/UPDATE/DELETE), các lệnh DDL **dễ** gây lock rộng hơn (chi tiết vẫn tùy hệ quản trị và cách bạn thực hiện).
+
+> **Pro tip:** Nếu không chắc tác động, hãy thử đi đường vòng an toàn hơn (ví dụ: thêm cột nullable trước, di chuyển dữ liệu dần), rồi mới siết chặt constraint ở bước cuối.
+
+### Ảnh hưởng
+
+Vì thay đổi cấu trúc, nếu sử dụng không cẩn thận có thể gây:
+- **Mất dữ liệu** - Ví dụ: `DROP TABLE Khach` sẽ xóa hết dữ liệu
+- **Ứng dụng bị lỗi** - Nếu xóa cột mà code vẫn cố ghi vào cột đó
+- **Performance giảm** - Thêm chỉ mục không cần thiết làm chậm ghi dữ liệu
+
+Ngược lại, dùng DDL tốt sẽ giúp hệ thống: rõ ràng, mở rộng dễ hơn, bảo trì tốt hơn.
+
+> **Mẹo thực tế:** Trước khi chạy DDL, nên xác định trước phương án quay lại. Có backup, có staging, có kế hoạch rollback sẽ an toàn hơn.
+
+> **Checklist DDL (30 giây):**
+> - Kiểm thử ở staging với dữ liệu đủ lớn
+> - Chọn thời điểm off-peak, có maintenance window
+> - Liệt kê ứng dụng/service bị ảnh hưởng, cân nhắc feature flag
+> - Chuẩn bị sẵn script rollback/backup
+
+---
+
+## Những Lệnh DDL Phổ Biến
+
+*(Tham khảo thêm: [https://www.postgresql.org/docs/current/sql-createtable.html](https://www.postgresql.org/docs/current/sql-createtable.html))*
+
+### CREATE TABLE - Tạo Bảng Mới
+
+```sql
+CREATE TABLE Sach (
+    SachID SERIAL PRIMARY KEY,
+    TenSach VARCHAR(200) NOT NULL,
+    TacGia VARCHAR(100),
+    Gia DECIMAL(10,2) DEFAULT 0,
+    TonKho INT DEFAULT 0,
+    NgayTao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Kết quả:** Tạo bảng Sach với 6 cột, SachID tự tăng (SERIAL), ngày tạo tự động ghi nhận thời điểm.
+
+**Các tùy chọn phổ biến:**
+- `PRIMARY KEY` - Khóa chính, giá trị không trùng lặp, không null
+- `NOT NULL` - Bắt buộc nhập dữ liệu, không được để trống
+- `DEFAULT` - Giá trị mặc định nếu không nhập
+- `UNIQUE` - Giá trị không được trùng lặp
+- `FOREIGN KEY` - Khóa ngoài, tham chiếu đến bảng khác
+
+### ALTER TABLE - Thay Đổi Bảng Đang Có
+
+Thêm cột mới:
+
+```sql
+ALTER TABLE Sach ADD COLUMN MoTa TEXT;
+```
+
+**Kết quả:** Bảng Sach giờ có thêm cột MoTa.
+
+Đổi tên cột:
+
+```sql
+ALTER TABLE Sach RENAME COLUMN MoTa TO MoTaSach;
+```
+
+**Kết quả:** Cột MoTa đổi tên thành MoTaSach.
+
+Thay đổi kiểu dữ liệu cột:
+
+```sql
+ALTER TABLE Sach ALTER COLUMN Gia TYPE NUMERIC(12,2);
+```
+
+**Kết quả:** Cột Gia từ DECIMAL(10,2) thay đổi sang NUMERIC(12,2) (cho phép lớn hơn).
+
+Xóa cột:
+
+```sql
+ALTER TABLE Sach DROP COLUMN MoTa;
+```
+
+**Kết quả:** Cột MoTa bị xóa khỏi bảng. (Cẩn trọng: dữ liệu trong cột đó sẽ mất)
+
+### DROP TABLE - Xóa Bảng
+
+```sql
+DROP TABLE Sach;
+```
+
+**Kết quả:** Bảng Sach và tất cả dữ liệu bị xóa vĩnh viễn. (Rất nguy hiểm.)
+
+Nếu muốn an toàn hơn, có tùy chọn:
+
+```sql
+DROP TABLE IF EXISTS Sach;  -- Chỉ xóa nếu bảng tồn tại, không báo lỗi nếu không tồn tại
+```
+
+### TRUNCATE TABLE - Xóa Dữ Liệu Nhưng Giữ Cấu Trúc
+
+```sql
+TRUNCATE TABLE Sach;
+```
+
+**Kết quả:** Tất cả dữ liệu trong bảng Sach bị xóa, nhưng cấu trúc bảng vẫn tồn tại. Nếu có cột SERIAL (auto-increment), ID sẽ reset lại từ 1 (tùy hệ quản trị).
+
+**Khác nhau giữa TRUNCATE và DELETE:**
+
+| Tiêu chí | DELETE | TRUNCATE |
+|----------|--------|----------|
+| Tác dụng | Xóa dữ liệu | Xóa dữ liệu |
+| Điều kiện | Có thể dùng WHERE | Xóa toàn bộ |
+| Tốc độ | Chậm (từng hàng) | Nhanh (toàn bộ) |
+| Rollback | Có thể (với transaction) | Tùy hệ quản trị |
+| IDENTITY/SERIAL | Vẫn tăng tiếp | Reset lại (thường) |
+
+> `TRUNCATE` thường không chạy được nếu bảng đó đang được bảng khác tham chiếu (Foreign Key constraints), trừ khi dùng `CASCADE` (Postgres) hoặc tắt check key (MySQL). `DELETE` thì chạy được (và xóa luôn dòng bên kia nếu có cascade).
+
+> **Mẹo:** Nếu cần xóa sạch nhanh gọn, mình thường chọn TRUNCATE. Còn khi cần lọc theo WHERE hoặc muốn kiểm soát bằng transaction, DELETE hợp lý hơn.
+
+---
+
+## Case Study: Downtime Khi Thay Đổi Schema
+
+Dưới đây là một tình huống mình gặp khi làm việc với DDL và downtime. Mục tiêu là thấy rõ rằng **DDL không chỉ “thêm/xóa cột” – mà tác động trực tiếp đến hệ thống đang chạy.**
+
+*(Tham khảo thêm ghi chú: “Ghi Chú Thực Tế về Database Migration và Scaling”)*
+
+### Scenario: Thêm Cột `wallet_balance` Cho Bảng KhachHang
+
+Giả sử có một ứng dụng bán sách live với ~1000 khách hàng/ngày. PM bảo “mình cần ví điện tử để tích lũy điểm, nhanh nhé”. Bạn cần thêm cột `wallet_balance` vào bảng `KhachHang`.
+
+Ứng dụng yêu cầu: **Cột này không được phép NULL** (nếu NULL sẽ gây lỗi khi hiển thị ví).
+
+#### Cách dễ gây downtime (cân nhắc kỹ)
+
+```sql
+ALTER TABLE KhachHang 
+ADD COLUMN wallet_balance DECIMAL(10,2) NOT NULL DEFAULT 0;
+```
+
+**Điều gì có thể xảy ra (tùy hệ/phiên bản/cách chạy):**
+
+1. Database nhận lệnh ALTER
+2. Có thể **lock bảng** ở mức rộng trong lúc thực thi
+3. Với `NOT NULL DEFAULT 0`, engine phải cập nhật **mọi row hiện có** để gán giá trị 0
+4. Bảng càng lớn, thời gian càng dài (phút → chục phút)
+5. Trong thời gian đó, app có thể lỗi timeout, người dùng kêu ca
+
+**Kết luận:** Đây là cách nhanh – clean – nhưng dễ downtime.
+
+> **Vì sao dễ downtime?** Vì `NOT NULL DEFAULT 0` buộc hệ thống ghi lại cho toàn bộ dữ liệu cũ. Đây là công việc nặng và có thể cần lock dài.
+
+#### Cách không gây downtime (Zero‑Downtime)
+
+Có hai lựa chọn tùy theo nhu cầu business:
+
+**Lựa chọn 1: Thêm cột nullable, xử lý logic ở application**
+
+```sql
+-- Bước 1: Thêm cột dưới dạng nullable (cho phép NULL)
+ALTER TABLE KhachHang 
+ADD COLUMN wallet_balance DECIMAL(10,2) DEFAULT NULL;
+```
+
+**Điều gì xảy ra:**
+- Lệnh này chạy **rất nhanh** (< 1 giây) vì không cần cập nhật từng row
+- Bảng KhachHang vẫn có thể truy cập bình thường
+- Khách hàng không bị ảnh hưởng
+
+```javascript
+// Bước 2: Xử lý logic ở tầng application (Node.js / Python / Java...)
+function getWalletBalance(customer) {
+  // Nếu wallet_balance là NULL, tự động coi nó là 0
+  return customer.wallet_balance ?? 0;
+}
+```
+
+```sql
+-- Bước 3 (Optional): Chạy background job để từ từ cập nhật NULL thành 0
+-- (Chỉ khi hệ thống không bận)
+UPDATE KhachHang 
+SET wallet_balance = 0 
+WHERE wallet_balance IS NULL
+LIMIT 1000;  -- Cập nhật 1000 hàng một lần, tránh overload
+```
+
+**Ưu điểm:**
+- Không downtime
+- Ứng dụng vẫn chạy bình thường
+- Có thể kiểm soát tốc độ cập nhật dữ liệu cũ
+
+**Nhược điểm:**
+- Cần code xử lý ở application
+- Một thời gian dữ liệu sẽ không đồng nhất (một số là 0, một số là NULL)
+
+---
+
+**Lựa chọn 2: Thêm cột nhưng không có DEFAULT (hoàn toàn NULL)**
+
+```sql
+ALTER TABLE KhachHang 
+ADD COLUMN wallet_balance DECIMAL(10,2);
+```
+
+**Điều gì xảy ra:**
+- Lệnh này chạy **rất nhanh**
+- Khách hàng mới sẽ tự động có wallet_balance = NULL (hoặc đặt logic default)
+- Khách hàng cũ có wallet_balance = NULL (cho đến khi được cập nhật)
+
+**Ưu điểm:**
+- Nhanh nhất, không downtime
+- Sau đó có thể thêm CHECK constraint để bắt buộc NOT NULL (sau này)
+
+**Nhược điểm:**
+- Ứng dụng cần xử lý NULL, nếu quên sẽ gây lỗi
+
+---
+
+### Kết Luận Về Downtime
+
+> **Quan niệm chưa đúng:** Thay đổi schema trong SQL luôn gây downtime
+> 
+> **Sự thật:** Downtime phụ thuộc vào cách dev xử lý và tùy vào ràng buộc của nghiệp vụ.
+
+**Luôn luôn có 2 lựa chọn:**
+
+1. **Lựa chọn A (Fast but risky):** Thêm ngay `NOT NULL DEFAULT 0`, gây downtime tuy nhiên dữ liệu sạch sẽ ngay lập tức
+   - Phù hợp: bảng nhỏ, off-peak time, downtime có thể chấp nhận
+2. **Lựa chọn B (Slow but safe):** Thêm nullable, xử lý ở application, cập nhật dần từ từ
+   - Phù hợp: bảng lớn, live system, zero-downtime yêu cầu
+
+---
+
+## Best Practice Khi Sử Dụng DDL
+
+Dưới đây là những **lời khuyên thực tiễn** giúp bạn dùng DDL an toàn và hiệu quả:
+
+### 1. Luôn thử thay đổi trong môi trường Staging trước
+
+Khi thay đổi cấu trúc bảng nhỏ thì ít rủi ro; với bảng lớn hoặc live system, thay đổi có thể gây downtime.
+
+```bash
+# Thường có 3 environment:
+# - Local (máy dev)
+# - Staging (y hệt production, nhưng dữ liệu là demo)
+# - Production (live, khách hàng thực)
+
+# Bước 1: Test DDL ở Local
+# Bước 2: Test lại ở Staging (với dữ liệu lớn)
+# Bước 3: Chạy ở Production (khi chắc chắn)
+```
+
+### 2. Backup hoặc Snapshot Dữ Liệu Trước DDL Lớn
+
+Vì nếu lỡ tay `DROP TABLE` hoặc xóa cột, việc quay lại có thể rất khó:
+
+```bash
+# Ví dụ PostgreSQL
+pg_dump mydatabase > backup_before_ddl.sql
+
+# Ví dụ MySQL
+mysqldump -u user -p mydatabase > backup_before_ddl.sql
+```
+
+### 3. Đặt Tên Rõ Ràng và Thống Nhất (Naming Convention)
+
+Ví dụ: dùng `snake_case` cho cột, dùng `Sach` cho bảng (với hoa chữ cái đầu tiên), đảm bảo ai vào sau cũng hiểu.
+
+**Không nên:**
+```sql
+CREATE TABLE s (  -- Quá viết tắt, ai biết s là cái gì?
+    id INT,
+    NAME VARCHAR(100),  -- Hoa thường không đồng nhất
+    age INT
+);
+```
+
+**Nên:**
+```sql
+CREATE TABLE Sach (
+    SachID SERIAL PRIMARY KEY,
+    TenSach VARCHAR(100) NOT NULL,
+    TacGia VARCHAR(100),
+    Gia DECIMAL(10,2)
+);
+```
+
+### 4. Tránh Thêm Quá Nhiều Chỉ Mục Không Cần Thiết
+
+Mặc dù DDL cho phép tạo chỉ mục, nhưng chỉ mục cũng có chi phí:
+- Viết dữ liệu chậm hơn (phải cập nhật chỉ mục)
+- Chiếm thêm bộ nhớ
+- Bảo trì khó hơn
+
+```sql
+-- Chỉ thêm index cho cột hay tìm kiếm
+CREATE INDEX idx_sach_tensach ON Sach(TenSach);
+
+-- Không nên thêm index cho mọi cột
+CREATE INDEX idx_sach_tacgia ON Sach(TacGia);  -- Nếu ít khi tìm kiếm theo TacGia thì không cần
+```
+
+### 5. Đọc Kỹ Tài Liệu Hệ Quản Trị Bạn Dùng
+
+Vì cơ chế DDL khác nhau:
+- **MySQL:** `ALTER TABLE` có thể khóa bảng dài hơn
+- **PostgreSQL:** Hỗ trợ online DDL tốt hơn (thêm cột nullable rất nhanh)
+- **SQL Server:** Có cơ chế ONLINE = ON để giảm lock
+
+> **Ví dụ:** Thêm cột nullable ở PostgreSQL chỉ mất < 1 giây, nhưng ở MySQL cũ có thể mất vài phút.
+
+### 6. Cẩn Trọng Với Việc Đổi Tên / Xóa Cột Đang Được Sử Dụng
+
+Ứng dụng có thể crash hoặc dữ liệu bị mất:
+
+```javascript
+// Code ứng dụng cũ
+const sach = result.rows[0];
+console.log(sach.MoTa);  // Nếu cột MoTa bị xóa, đây sẽ là undefined
+```
+
+**Best practice:**
+- Thông báo cho team development trước khi xóa/đổi tên
+- Chuẩn bị code mới trước khi chạy DDL
+- Nếu có thể, "deprecate" cột cũ trước (chẳng hạn giữ cột cũ, thêm cột mới, sau đó xóa cột cũ sau vài tháng)
+
+### 7. Ghi Lại Lịch Sử Thay Đổi (Migrations) và Version Control
+
+Khi thay đổi schema, ghi log hoặc script rõ ràng để người khác hoặc chính bạn sau này biết đã thay đổi gì và vì sao:
+
+```javascript
+// Ví dụ: Dùng migration framework (như Flyway, Prisma, Alembic)
+// migrations/001_create_sach_table.sql
+CREATE TABLE Sach (
+    SachID SERIAL PRIMARY KEY,
+    TenSach VARCHAR(200) NOT NULL,
+    Gia DECIMAL(10,2)
+);
+
+// migrations/002_add_wallet_to_khachhang.sql
+ALTER TABLE KhachHang 
+ADD COLUMN wallet_balance DECIMAL(10,2) DEFAULT 0;
+-- Commit message: "Add wallet_balance column for loyalty points"
+```
+***Lưu ý:** Ở các phiên bản DB hiện đại như Postgres 11+ hay MySQL 8.0+, thao tác này đã được tối ưu để chạy tức thì. Tuy nhiên, với các phiên bản cũ hoặc các hệ quản trị khác, đây vẫn là tử huyệt gây treo hệ thống.*
+
+> **Mẹo:** Dùng migration framework như Flyway (Java), Prisma (Node.js/TypeScript), Alembic (Python) để quản lý DDL. Dễ trace ai đổi gì, lúc nào, và có đường lui khi cần.
+
+---
+
+## Tóm Lại
+
+Việc sử dụng **DDL đúng cách** giúp bạn xây dựng một cơ sở dữ liệu **đẹp, rõ ràng và dễ bảo trì**. Ngược lại, nếu dùng DDL một cách tùy tiện, bạn có thể gặp rủi ro: mất dữ liệu, downtime, ứng dụng lỗi.
+
+**3 điều nhớ:**
+
+1. **Thay đổi cấu trúc là việc lớn hơn thay đổi dữ liệu** – dùng các mẹo ở trên để giảm rủi ro
+2. **Downtime không phải là tất yếu** – với cách triển khai phù hợp, bạn có thể thêm cột mà không dừng hệ thống
+3. **Test trước, backup trước, ghi chú rõ ràng** – ba thói quen nhỏ nhưng hiệu quả
+
+Nếu phần này giúp bạn tránh được một lần downtime, mình coi như đã đạt mục tiêu. Hẹn gặp lại trong bài tiếp theo.
+
+---
+
+## Tham Khảo Thêm
+
+- **PostgreSQL DDL:** [https://www.postgresql.org/docs/current/ddl.html](https://www.postgresql.org/docs/current/ddl.html)
+- **MySQL Alter Table:** [https://dev.mysql.com/doc/refman/8.0/en/alter-table.html](https://dev.mysql.com/doc/refman/8.0/en/alter-table.html)
+- **Migration Frameworks:** [Flyway](https://flywaydb.org/), [Prisma Migrate](https://www.prisma.io/docs/orm/prisma-migrate), [Alembic](https://alembic.sqlalchemy.org/)

@@ -9,6 +9,7 @@ export { FormButton } from './form-button';
 export { OAuthButton } from './oauth-button';
 export * from './scroll-to-top';
 export { Toc } from './table-of-contents';
+export { CopyMarkdownButton, CopyMarkdownIconButton } from './copy-markdown-button';
 
 // Theme utilities
 export { theme } from 'app/lib/theme/mantine-theme';

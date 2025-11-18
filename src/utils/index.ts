@@ -11,3 +11,6 @@ export * from './log';
 export * from './format';
 export * from './helpers';
 export * from './validation';
+
+// Markdown utilities
+export * from './markdown-sanitizer';

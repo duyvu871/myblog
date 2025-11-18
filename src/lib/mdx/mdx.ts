@@ -27,6 +27,8 @@ export interface BlogPost {
   thumbnail?: string;
   content: () => React.JSX.Element;
   headings: HeadingItem[];
+  rawMarkdown: string; // Raw markdown content for copying
+  frontmatter: any; // Frontmatter object
 }
 
 export interface BlogPostMetadata {
@@ -149,6 +151,8 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       thumbnail: frontmatter.thumbnail || '',
       headings,
       content: () => MDXContent,
+      rawMarkdown: content, // Store the raw markdown content
+      frontmatter, // Store the frontmatter object
     };
   } catch (error) {
     console.error(`Error reading post ${slug}:`, error);
