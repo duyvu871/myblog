@@ -24,12 +24,12 @@ export default function PostCard({
             src={post.thumbnail}
             alt={post.title}
             // width={400}
-            // height={200}
+            height={200}
             radius="12px"
             style={{
               width: '100%',
               height: '200px',
-              objectFit: 'cover',
+              objectFit: 'contain',
             }}
           />
         )}
